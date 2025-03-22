@@ -16,7 +16,15 @@ Route::get('admin/dashboard', function () {
     return Inertia::render('AdminDashboard');
 })->middleware(['auth', 'verified'])->name('admin.dashboard');
 
-Route::get('admin/managers', [ManagerController::class, 'index'])->middleware(['auth', 'verified'])->name('managers.index');
+// Manager routes
+Route::prefix('admin/managers')->middleware(['auth', 'verified'])->group(function () {
+    Route::get('/', [ManagerController::class, 'index'])->name('managers.index');
+    Route::post('/', [ManagerController::class, 'store'])->name('managers.store');
+});
+
+Route::delete('/admin/managers/{user}', [ManagerController::class, 'destroy'])->name('managers.destroy');
+Route::get('/admin/managers/{user}/edit', [ManagerController::class, 'edit'])->name('managers.edit');
+Route::put('/admin/managers/{user}', [ManagerController::class, 'update'])->name('managers.update');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
