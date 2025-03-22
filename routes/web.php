@@ -10,7 +10,7 @@ Route::get('/', function () {
 
 Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+})->middleware(['auth', 'verified', 'client.only'])->name('dashboard');
 
 Route::get('admin/dashboard', function () {
     return Inertia::render('AdminDashboard');
