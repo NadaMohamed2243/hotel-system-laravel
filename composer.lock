@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "855d890ad6f8126c618922c69a4ae044",
+    "content-hash": "6507b78e7b73654bf978dc656508175b",
     "packages": [
         {
             "name": "brick/math",
@@ -134,6 +134,89 @@
                 }
             ],
             "time": "2024-02-09T16:56:22+00:00"
+        },
+        {
+            "name": "cybercog/laravel-ban",
+            "version": "4.10.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/cybercog/laravel-ban.git",
+                "reference": "d569469a947671c0316a7ea1bbd471223dff23e7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/cybercog/laravel-ban/zipball/d569469a947671c0316a7ea1bbd471223dff23e7",
+                "reference": "d569469a947671c0316a7ea1bbd471223dff23e7",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/database": "^9.0|^10.0|^11.0|^12.0",
+                "illuminate/events": "^9.0|^10.0|^11.0|^12.0",
+                "illuminate/support": "^9.0|^10.0|^11.0|^12.0",
+                "php": "^8.0"
+            },
+            "require-dev": {
+                "mockery/mockery": "^1.0",
+                "orchestra/testbench": "^7.0|^8.0|^9.0|^10.0",
+                "phpunit/phpunit": "^9.6|^10.5|^11.5.3"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Cog\\Laravel\\Ban\\Providers\\BanServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Cog\\Laravel\\Ban\\": "src/",
+                    "Cog\\Contracts\\Ban\\": "contracts/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Anton Komarev",
+                    "email": "anton@komarev.com",
+                    "homepage": "https://komarev.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Laravel Ban simplify blocking and banning Eloquent models.",
+            "homepage": "https://komarev.com/sources/laravel-ban",
+            "keywords": [
+                "Justice",
+                "arrest",
+                "ban",
+                "block",
+                "cog",
+                "cybercog",
+                "eloquent",
+                "forbid",
+                "jail",
+                "laravel",
+                "restrict",
+                "trait",
+                "user"
+            ],
+            "support": {
+                "docs": "https://github.com/cybercog/laravel-ban/wiki",
+                "email": "open@cybercog.su",
+                "issues": "https://github.com/cybercog/laravel-ban/issues",
+                "source": "https://github.com/cybercog/laravel-ban",
+                "wiki": "https://github.com/cybercog/laravel-ban/wiki"
+            },
+            "funding": [
+                {
+                    "url": "https://paypal.me/antonkomarev",
+                    "type": "custom"
+                }
+            ],
+            "time": "2025-02-22T11:00:47+00:00"
         },
         {
             "name": "dflydev/dot-access-data",
@@ -445,16 +528,16 @@
         },
         {
             "name": "egulias/email-validator",
-            "version": "4.0.3",
+            "version": "4.0.4",
             "source": {
                 "type": "git",
                 "url": "https://github.com/egulias/EmailValidator.git",
-                "reference": "b115554301161fa21467629f1e1391c1936de517"
+                "reference": "d42c8731f0624ad6bdc8d3e5e9a4524f68801cfa"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/egulias/EmailValidator/zipball/b115554301161fa21467629f1e1391c1936de517",
-                "reference": "b115554301161fa21467629f1e1391c1936de517",
+                "url": "https://api.github.com/repos/egulias/EmailValidator/zipball/d42c8731f0624ad6bdc8d3e5e9a4524f68801cfa",
+                "reference": "d42c8731f0624ad6bdc8d3e5e9a4524f68801cfa",
                 "shasum": ""
             },
             "require": {
@@ -500,7 +583,7 @@
             ],
             "support": {
                 "issues": "https://github.com/egulias/EmailValidator/issues",
-                "source": "https://github.com/egulias/EmailValidator/tree/4.0.3"
+                "source": "https://github.com/egulias/EmailValidator/tree/4.0.4"
             },
             "funding": [
                 {
@@ -508,7 +591,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2024-12-27T00:36:43+00:00"
+            "time": "2025-03-06T22:45:56+00:00"
         },
         {
             "name": "fruitcake/php-cors",

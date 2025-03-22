@@ -49,4 +49,24 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+        /**
+     * Define the relationship with the Receptionist model.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function receptionist()
+    {
+        return $this->hasOne(Receptionist::class);
+    }
+
+    /**
+     * Define the relationship with Receptionists managed by this user (Manager).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function managedReceptionists()
+    {
+        return $this->hasMany(Receptionist::class, 'manager_id');
+    }
 }

@@ -22,7 +22,17 @@ const form = useForm({
 
 const submit = () => {
     form.post(route('login'), {
-        onFinish: () => form.reset('password'),
+        onFinish: () => {
+            form.reset('password');
+        },
+        onSuccess: (response) => {
+            const userRole = response?.props?.auth?.user?.role;
+            if (userRole === 'manager') {
+                router.visit(route('manager.dashboard'));
+            } else {
+                router.visit(route('dashboard'));
+            }
+        },
     });
 };
 </script>
