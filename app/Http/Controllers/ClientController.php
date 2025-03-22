@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use App\Models\Client;
+use Illuminate\Support\Facades\Auth;
 
 class ClientController extends Controller
 {
@@ -18,6 +19,7 @@ class ClientController extends Controller
 
     public function approvedClients()
     {
+        @dd(Auth::user());
         // $clients = Client::where('status', 'approved')->get();
         $user = Request()->user(); // Get the logged-in user
 
