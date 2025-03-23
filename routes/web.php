@@ -18,14 +18,16 @@ Route::get('admin/dashboard', function () {
     return Inertia::render('AdminDashboard');
 })->middleware(['auth', 'verified'])->name('admin.dashboard');
 
-// Manager routes - already has permission checks in the controller
-Route::prefix('admin/managers')->middleware(['auth', 'verified'])->group(function () {
-    Route::get('/', [ManagerController::class, 'index'])->name('managers.index');
-    Route::post('/', [ManagerController::class, 'store'])->name('managers.store');
-    Route::delete('/{user}', [ManagerController::class, 'destroy'])->name('managers.destroy');
-    Route::get('/{user}/edit', [ManagerController::class, 'edit'])->name('managers.edit');
-    Route::put('/{user}', [ManagerController::class, 'update'])->name('managers.update');
-});
+// Manager routes - using permission middleware
+Route::prefix('admin/managers')
+    ->middleware(['auth', 'verified', 'permission:manage managers'])
+    ->group(function () {
+        Route::get('/', [ManagerController::class, 'index'])->name('managers.index');
+        Route::post('/', [ManagerController::class, 'store'])->name('managers.store');
+        Route::delete('/{user}', [ManagerController::class, 'destroy'])->name('managers.destroy');
+        Route::get('/{user}/edit', [ManagerController::class, 'edit'])->name('managers.edit');
+        Route::put('/{user}', [ManagerController::class, 'update'])->name('managers.update');
+    });
 
 // These routes are now handled in the routes group above
 // Route::delete('/admin/managers/{user}', [ManagerController::class, 'destroy'])->name('managers.destroy');

@@ -18,19 +18,6 @@ class ManagerController extends Controller
      */
     public function index()
     {
-        // Check permission manually rather than in middleware to avoid errors
-        try {
-            if (!auth()->user()->hasPermissionTo('manage managers')) {
-                return abort(403, 'You do not have permission to view managers.');
-            }
-        } catch (\Exception $e) {
-            Log::warning('Permission check failed: ' . $e->getMessage());
-            // Fallback to role check if permission check fails - only admin can see managers
-            if (auth()->user()->role !== 'admin') {
-                return abort(403, 'Unauthorized action.');
-            }
-        }
-        
         $managers = User::where('role', 'manager')->get();
         
         // Transform managers to include full avatar URL
@@ -46,19 +33,6 @@ class ManagerController extends Controller
 
     public function store(Request $request)
     {
-        // Check permission manually
-        try {
-            if (!auth()->user()->hasPermissionTo('manage managers')) {
-                return abort(403, 'You do not have permission to create managers.');
-            }
-        } catch (\Exception $e) {
-            Log::warning('Permission check failed: ' . $e->getMessage());
-            // Fallback to role check if permission check fails
-            if (auth()->user()->role !== 'admin') {
-                return abort(403, 'Unauthorized action.');
-            }
-        }
-        
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -104,19 +78,6 @@ class ManagerController extends Controller
 
     public function destroy(User $user)
     {
-        // Check permission manually
-        try {
-            if (!auth()->user()->hasPermissionTo('manage managers')) {
-                return abort(403, 'You do not have permission to delete managers.');
-            }
-        } catch (\Exception $e) {
-            Log::warning('Permission check failed: ' . $e->getMessage());
-            // Fallback to role check if permission check fails
-            if (auth()->user()->role !== 'admin') {
-                return abort(403, 'Unauthorized action.');
-            }
-        }
-
         // Delete old avatar if exists
         if ($user->avatar_image) {
             Storage::disk('public')->delete($user->avatar_image);
@@ -140,16 +101,11 @@ class ManagerController extends Controller
 
     public function edit(User $user)
     {
-        // Check permission manually or if editing own profile
-        try {
-            $hasPermission = auth()->user()->hasPermissionTo('manage managers');
-        } catch (\Exception $e) {
-            Log::warning('Permission check failed: ' . $e->getMessage());
-            $hasPermission = auth()->user()->role === 'admin';
-        }
-        
-        if (!$hasPermission && auth()->id() !== $user->id) {
-            return abort(403, 'Unauthorized action.');
+        // Allow users to edit their own profile
+        if (auth()->id() !== $user->id) {
+            // The permission check for managing other managers is handled by middleware
+            // This just ensures a manager can edit their own profile
+            abort_if($user->role !== 'manager', 403, 'Unauthorized action.');
         }
 
         if ($user->avatar_image) {
@@ -161,16 +117,11 @@ class ManagerController extends Controller
 
     public function update(Request $request, User $user)
     {
-        // Check permission manually or if editing own profile
-        try {
-            $hasPermission = auth()->user()->hasPermissionTo('manage managers');
-        } catch (\Exception $e) {
-            Log::warning('Permission check failed: ' . $e->getMessage());
-            $hasPermission = auth()->user()->role === 'admin';
-        }
-        
-        if (!$hasPermission && auth()->id() !== $user->id) {
-            return abort(403, 'Unauthorized action.');
+        // Allow users to edit their own profile
+        if (auth()->id() !== $user->id) {
+            // The permission check for managing other managers is handled by middleware
+            // This just ensures a manager can edit their own profile
+            abort_if($user->role !== 'manager', 403, 'Unauthorized action.');
         }
 
         $request->validate([
