@@ -36,30 +36,40 @@ Route::prefix('admin/managers')->middleware(['auth', 'verified'])->group(functio
 
 
 //-----------------------------------receptionist--------------------------------------------
+Route::prefix('dashboard/receptionist')->middleware(['auth', 'verified'])->group(function () {
+    Route::get('/clients/pending', [ClientController::class, 'pendingClients'])->name('receptionist.pendingClients');
+    Route::get('/clients/approved', [ClientController::class, 'approvedClients'])->name('receptionist.approvedClients');
+    Route::get('/clients/reservations', [ClientController::class, 'clientReservations'])->name('receptionist.clientReservations');
+
+    Route::post('/clients/{id}/approve', [ClientController::class, 'approveClient'])->name('receptionist.approveClient');
+    Route::delete('/clients/{id}/unapprove', [ClientController::class, 'unapproveClient'])->name('receptionist.unapproveClient');
+});
+
+
 Route::get('dashboard/receptionist', function () {
     return Inertia::render('ReceptionistDashboard');
 })->middleware(middleware: ['auth', 'verified'])->name('ReceptionistDashboard');
 
 
-Route::get('dashboard/receptionist/clients/pending', [ClientController::class, 'pendingClients'])
-->middleware(middleware: ['auth', 'verified'])->name('receptionist.pendingClients');
+// Route::get('dashboard/receptionist/clients/pending', [ClientController::class, 'pendingClients'])
+// ->middleware(middleware: ['auth', 'verified'])->name('receptionist.pendingClients');
 
 
-Route::get('dashboard/receptionist/clients/approved', [ClientController::class, 'approvedClients'])
-->middleware(['auth', 'verified'])->name('receptionist.approvedClients');
+// Route::get('dashboard/receptionist/clients/approved', [ClientController::class, 'approvedClients'])
+// ->middleware(['auth', 'verified'])->name('receptionist.approvedClients');
 
 
-// Route::get('dashboard/receptionist/clients/reservations', function () {
-//     return Inertia::render('Receptionist/clientReservations');
-// })->middleware(['auth', 'verified'])->name('receptionist.clientReservations');
+// // Route::get('dashboard/receptionist/clients/reservations', function () {
+// //     return Inertia::render('Receptionist/clientReservations');
+// // })->middleware(['auth', 'verified'])->name('receptionist.clientReservations');
 
-Route::get('dashboard/receptionist/clients/reservations', [ClientController::class, 'clientReservations'])
-->middleware(['auth', 'verified'])->name('receptionist.clientReservations');
+// Route::get('dashboard/receptionist/clients/reservations', [ClientController::class, 'clientReservations'])
+// ->middleware(['auth', 'verified'])->name('receptionist.clientReservations');
 
 
 
-Route::post('dashboard/receptionist/clients/approve/{id}', [ClientController::class, 'approveClient'])
-->middleware(['auth', 'verified'])->name('receptionist.approveClient');
+// Route::post('dashboard/receptionist/clients/approve/{id}', [ClientController::class, 'approveClient'])
+// ->middleware(['auth', 'verified'])->name('receptionist.approveClient');
 
 
 require __DIR__.'/settings.php';

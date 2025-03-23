@@ -8,8 +8,9 @@ class Client extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['user_id', 'approved_by', 'status'];
-
+    protected $fillable = [
+        'user_id', 'approved_by', 'status', 'mobile', 'country', 'gender'
+    ];
     // Relationship with User (Client belongs to a user)
     public function user()
     {
