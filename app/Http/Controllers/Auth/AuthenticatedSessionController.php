@@ -40,6 +40,11 @@ class AuthenticatedSessionController extends Controller
         }
     
 
+        // Redirect to admin dashboard if user is not a client
+        if (Auth::user()->role !== 'client') {
+            return redirect()->intended(route('admin.dashboard', absolute: false));
+        }
+
         return redirect()->intended(route('dashboard', absolute: false));
     }
 

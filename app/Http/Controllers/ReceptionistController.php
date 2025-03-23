@@ -5,6 +5,12 @@ use App\Models\User;
 use App\Models\Receptionist;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rules;
+use Inertia\Inertia;
+
 
 class ReceptionistController extends Controller
 {
@@ -16,14 +22,38 @@ class ReceptionistController extends Controller
 
     public function index()
     {
-        if (Auth::user()->role === 'admin') {
-            $receptionists = Receptionist::all();
-        } else {
-            $receptionists = Receptionist::where('manager_id', Auth::id())->get();
+        try {
+            if (!auth()->user()->hasPermissionTo('manage receptionists')) {
+                return abort(403, 'You do not have permission to view receptionists.');
+            }
+        } catch (\Exception $e) {
+            Log::warning('Permission check failed: ' . $e->getMessage());
+            if (auth()->user()->role !== 'admin' && auth()->user()->role !== 'manager') {
+                return abort(403, 'Unauthorized action.');
+            }
         }
 
-        return view('receptionists.index', compact('receptionists'));
+        // Fetch receptionists based on user role
+        if (Auth::user()->role === 'admin') {
+            $receptionists = Receptionist::with('user')->get();
+        } else {
+            $receptionists = Receptionist::where('manager_id', Auth::id())->with('user')->get();
+        }
+
+        // Transform receptionists to include full avatar URL
+        $receptionists->transform(function ($receptionist) {
+            if ($receptionist->user->avatar_image) {
+                $receptionist->user->avatar = asset('storage/' . $receptionist->user->avatar_image);
+            }
+            return $receptionist;
+        });
+
+        return Inertia::render('Receptionists/Index', [
+             'receptionists' => $receptionists 
+        ]);
     }
+
+
 
 
 
@@ -87,3 +117,6 @@ class ReceptionistController extends Controller
         return redirect()->back()->with('success', 'Receptionist unbanned successfully.');
     }
 }
+
+
+
