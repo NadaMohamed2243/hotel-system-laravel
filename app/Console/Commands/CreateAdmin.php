@@ -60,6 +60,7 @@ class CreateAdmin extends Command
             'email_verified_at' => now(),
         ]);
 
+        $user->assignRole('admin');
         $this->info("Admin user '{$user->email}' created successfully!");
         
         return 0;
