@@ -1,134 +1,148 @@
-<template>
-    <div>
-        <Head title="Pending Clients" />
-
-        <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex flex-col gap-4 p-8">
-            <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl font-bold">Pending Clients</h1>
-            </div>
-
-
-            <Card class="w-full">
-                <CardContent class="p-0">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-
-
-                                <TableHead class="w-16 text-gray-300">ID</TableHead>
-                                <TableHead class="text-gray-300">Name</TableHead>
-                                <TableHead class="text-gray-300">Email</TableHead>
-                                <TableHead class="text-gray-300">Mobile</TableHead>
-                                <TableHead class="text-gray-300">Country</TableHead>
-                                <TableHead class="text-gray-300">Gender</TableHead>
-                                <TableHead class="text-center text-gray-300">Action</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            <TableRow v-for="client in clients" :key="client.id">
-                                <TableCell class="font-medium text-gray-200">{{ client.user?.id || "N/A" }}</TableCell>
-                                <TableCell class="text-gray-200">{{ client.user?.name || "N/A" }}</TableCell>
-                                <TableCell class="text-gray-200">{{ client.user?.email || "N/A" }}</TableCell>
-                                <TableCell class="text-gray-200">{{ client.mobile || "N/A" }}</TableCell>
-                                <TableCell class="text-gray-200">{{ client.country || "N/A" }}</TableCell>
-                                <TableCell class="text-gray-200">{{ client.gender || "N/A" }}</TableCell>
-
-
-                                <TableCell class="text-center">
-                                    <div class="flex justify-center gap-2">
-                                        <Button variant="outline" size="sm" @click="approveClient(client)"
-                                            class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-700 mr-2">
-                                        Approve
-                                    </Button>
-                                    <Button variant="outline" size="sm" @click="unapproveClient(client)"
-                                            class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-700">
-                                        Unapprove
-                                    </Button>
-                                    </div>
-                                </TableCell>
-                            </TableRow>
-                            <TableRow v-if="clients?.length === 0" :key="'empty'">
-                                <TableCell colspan="7" class="text-center py-8 text-muted-foreground">
-                                    No pending clients found.
-                                </TableCell>
-                            </TableRow>
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
-        </div>
-    </AppLayout>
-    </div>
-</template>
-
-
 <script setup lang="ts">
 import AppLayout from '@/layouts/ReceptionistLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { BreadcrumbItem } from '@/types';
-import { ref } from 'vue';
+import { type BreadcrumbItem } from '@/types';
+import { ref, computed, h } from 'vue';
 import { router } from '@inertiajs/vue3';
+import DataTable from './DataTable.vue'; // Import the DataTable component
 import { Button } from '@/components/ui/button';
-import { computed } from "vue";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow
-} from '@/components/ui/table';
-import { Card, CardContent } from '@/components/ui/card';
 
-
-
-interface Client {
+export interface Client {
+  id: number;
+  user?: {
     id: number;
-    user?: {
-        id: number;
-        name: string;
-        email: string;
-    };
-    mobile: string;
-    country: string;
-    gender: string;
+    name: string;
+    email: string;
+  };
+  mobile: string | null;
+  country: string | null;
+  gender: 'male' | 'female' | 'other' | null;
 }
 
-import { PropType } from 'vue';
+const props = defineProps<{
+  clients: Client[];
+  pagination: {
+    page: number;
+    pageSize: number;
+    total: number;
+  };
+}>();
 
-const props = defineProps({
-    clients: {
-        type: Array as PropType<Client[]>,
-        required: true,
-    },
-});
-// const clients = ref(props.clients);
 const clients = computed(() => props.clients);
 
-
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Receptionist Dashboard',
-        href: '/dashboard/receptionist',
+const columns = [
+  {
+    accessorKey: 'name',
+    header: () => h('div', { class: 'text-left' }, 'Client Name'),
+    cell: ({ row }) => {
+      const name = row.original.user?.name || 'N/A';
+      return h('div', { class: 'text-left font-medium' }, name);
     },
-    {
-        title: 'Pending Clients',
-        href: '/dashboard/receptionist/pending-clients',
-    }
+  },
+  {
+    accessorKey: 'email',
+    header: () => h('div', { class: 'text-left' }, 'Email'),
+    cell: ({ row }) => {
+      const email = row.original.user?.email || 'N/A';
+      return h('div', { class: 'text-left font-medium' }, email);
+    },
+  },
+  {
+    accessorKey: 'mobile',
+    header: () => h('div', { class: 'text-left' }, 'Mobile'),
+    cell: ({ row }) => {
+      const mobile = row.original.mobile || 'N/A';
+      return h('div', { class: 'text-left font-medium' }, mobile);
+    },
+  },
+  {
+    accessorKey: 'country',
+    header: () => h('div', { class: 'text-left' }, 'Country'),
+    cell: ({ row }) => {
+      const country = row.original.country || 'N/A';
+      return h('div', { class: 'text-left font-medium' }, country);
+    },
+  },
+  {
+    accessorKey: 'gender',
+    header: () => h('div', { class: 'text-left' }, 'Gender'),
+    cell: ({ row }) => {
+      const gender = row.original.gender || 'N/A';
+      return h('div', { class: 'text-left font-medium' }, gender);
+    },
+  },
 ];
 
+const breadcrumbs: BreadcrumbItem[] = [
+  {
+    title: 'Receptionist Dashboard',
+    href: '/dashboard/receptionist',
+  },
+  {
+    title: 'Pending Clients',
+    href: '/dashboard/receptionist/pending-clients',
+  },
+];
 
-const approveClient = (client: Client) => {
-    router.patch(`/dashboard/receptionist/clients/${client.id}`);
+// const approveClient = (client: Client) => {
+//   router.patch(`/dashboard/receptionist/clients/${client.id}`);
+//   router.reload();
+// };
+
+// const unapproveClient = (client: Client) => {
+//   router.delete(`/dashboard/receptionist/clients/delete/${client.id}`);
+//   router.reload();
+// };
+
+const approveClient = async (client: Client) => {
+  await router.patch(`/dashboard/receptionist/clients/${client.id}`);
+  router.visit(route('receptionist.pendingClients')); // Navigate to the same page
 };
 
-const unapproveClient = (client: Client) => {
-
-    console.log(client);
-    router.delete(`/dashboard/receptionist/clients/delete/${client.id}`);
+const unapproveClient = async (client: Client) => {
+  await router.delete(`/dashboard/receptionist/clients/delete/${client.id}`);
+  router.visit(route('receptionist.pendingClients')); // Navigate to the same page
 };
 </script>
 
-
-<style></style>
+<template>
+  <div>
+    <Head title="Pending Clients" />
+    <AppLayout :breadcrumbs="breadcrumbs">
+      <DataTable
+        :data="clients"
+        :columns="columns"
+        :pagination="props.pagination"
+        :manual-pagination="true"
+        @pagination-change="(newPagination) => {
+          router.get(route('receptionist.pendingClients'), {
+            page: newPagination.pageIndex + 1,
+            pageSize: newPagination.pageSize,
+          });
+        }"
+      >
+        <!-- Action Buttons Slot -->
+        <template #actions="{ row }">
+          <div class="flex justify-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              @click="approveClient(row.original)"
+              class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-700 mr-2"
+            >
+              Approve
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              @click="unapproveClient(row.original)"
+              class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-700"
+            >
+              Unapprove
+            </Button>
+          </div>
+        </template>
+      </DataTable>
+    </AppLayout>
+  </div>
+</template>

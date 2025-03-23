@@ -14,10 +14,28 @@ class ClientController extends Controller
      */
     public function pendingClients()
     {
-        $clients = Client::where('status', 'pending')->with('user')->get()->toArray();
+        // $clients = Client::where('status', 'pending')->with('user')->get()->toArray();
+
+        // return Inertia::render('Receptionist/pendingClients', [
+        //     'clients' => $clients
+        // ]);
+
+        // Get pagination parameters from the request
+        $page = Request()->query('page', 1); // Default to page 1
+        $pageSize = Request()->query('pageSize', 8); // Default to 9 rows per page
+
+        // Fetch paginated clients with 'pending' status
+        $clients = Client::where('status', 'pending')
+            ->with('user')
+            ->paginate($pageSize, ['*'], 'page', $page);
 
         return Inertia::render('Receptionist/pendingClients', [
-            'clients' => $clients
+            'clients' => $clients->items(), // Pass only the paginated items
+            'pagination' => [
+                'page' => $clients->currentPage(),
+                'pageSize' => $clients->perPage(),
+                'total' => $clients->total(),
+            ],
         ]);
     }
 
