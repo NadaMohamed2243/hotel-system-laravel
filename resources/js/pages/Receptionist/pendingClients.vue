@@ -4,7 +4,7 @@ import { Head } from '@inertiajs/vue3';
 import { type BreadcrumbItem } from '@/types';
 import { ref, computed, h } from 'vue';
 import { router } from '@inertiajs/vue3';
-import DataTable from './DataTable.vue'; // Import the DataTable component
+import DataTable from '@/components/DataTable.vue'; // Import the DataTable component
 import { Button } from '@/components/ui/button';
 
 export interface Client {
