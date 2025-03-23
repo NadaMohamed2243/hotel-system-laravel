@@ -5,6 +5,7 @@ use Inertia\Inertia;
 use Illuminate\Http\Request;
 use App\Models\Client;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 
 class ClientController extends Controller
 {
@@ -13,7 +14,7 @@ class ClientController extends Controller
      */
     public function pendingClients()
     {
-        $clients = Client::where('status', 'pending') ->with('user')->get();
+        $clients = Client::where('status', 'pending')->with('user')->get()->toArray();
 
         return Inertia::render('Receptionist/pendingClients', [
             'clients' => $clients
@@ -25,14 +26,39 @@ class ClientController extends Controller
      */
     public function approvedClients()
     {
+        // $user = Auth::user(); // Get the logged-in receptionist
+
+        // $clients = Client::where('approved_by', $user->id) // Only show clients approved by this receptionist
+        //     ->where('status', 'approved')
+        //     ->with('user')
+        //     ->get()->toArray();
+
+        // return Inertia::render('Receptionist/approvedClients', [
+        //     'clients' => $clients
+        // ]);
+
+
+
         $user = Auth::user(); // Get the logged-in receptionist
 
-        $clients = Client::where('approved_by', $user->id) // Only show clients approved by this receptionist
+        // Get pagination parameters from the request
+        $page = Request()->query('page', 1); // Default to page 1
+        $pageSize = Request()->query('pageSize', 8); // Default to 9 rows per page
+
+
+        // Fetch paginated clients approved by the logged-in receptionist
+        $clients = Client::where('approved_by', $user->id)
             ->where('status', 'approved')
-            ->get();
+            ->with('user')
+            ->paginate($pageSize, ['*'], 'page', $page);
 
         return Inertia::render('Receptionist/approvedClients', [
-            'clients' => $clients
+            'clients' => $clients->items(), // Pass only the paginated items
+            'pagination' => [
+                'page' => $clients->currentPage(),
+                'pageSize' => $clients->perPage(),
+                'total' => $clients->total(),
+            ],
         ]);
     }
 
@@ -56,9 +82,9 @@ class ClientController extends Controller
     }
 
     /**
-     * Approve a client.
+     * Approve a client (update the status to approved).
      */
-    public function approveClient($id)
+    public function update($id)
     {
         $user = Auth::user();
         $client = Client::findOrFail($id);
@@ -75,12 +101,17 @@ class ClientController extends Controller
     /**
      * Unapprove a client (delete from database).
      */
-    public function unapproveClient($id)
+    public function delete($id)
     {
         $client = Client::findOrFail($id);
-        $client->delete(); // Remove from the database
+        $userId = $client->user_id; // Get the associated user ID
+        $client->delete(); // Delete the client from the clients table
+        $user = User::find($userId);
+        if ($user) {
+            $user->delete(); // Delete the user from the users table
+        }
 
-        return redirect()->route('receptionist.approvedClients')
+        return redirect()->route('receptionist.pendingClients')
             ->with('success', 'Client unapproved and removed.');
     }
 }

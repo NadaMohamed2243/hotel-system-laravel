@@ -1,7 +1,75 @@
+<template>
+    <div>
+        <Head title="Pending Clients" />
+
+        <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="flex flex-col gap-4 p-8">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold">Pending Clients</h1>
+            </div>
+
+
+            <Card class="w-full">
+                <CardContent class="p-0">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+
+
+                                <TableHead class="w-16 text-gray-300">ID</TableHead>
+                                <TableHead class="text-gray-300">Name</TableHead>
+                                <TableHead class="text-gray-300">Email</TableHead>
+                                <TableHead class="text-gray-300">Mobile</TableHead>
+                                <TableHead class="text-gray-300">Country</TableHead>
+                                <TableHead class="text-gray-300">Gender</TableHead>
+                                <TableHead class="text-center text-gray-300">Action</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            <TableRow v-for="client in clients" :key="client.id">
+                                <TableCell class="font-medium text-gray-200">{{ client.user?.id || "N/A" }}</TableCell>
+                                <TableCell class="text-gray-200">{{ client.user?.name || "N/A" }}</TableCell>
+                                <TableCell class="text-gray-200">{{ client.user?.email || "N/A" }}</TableCell>
+                                <TableCell class="text-gray-200">{{ client.mobile || "N/A" }}</TableCell>
+                                <TableCell class="text-gray-200">{{ client.country || "N/A" }}</TableCell>
+                                <TableCell class="text-gray-200">{{ client.gender || "N/A" }}</TableCell>
+
+
+                                <TableCell class="text-center">
+                                    <div class="flex justify-center gap-2">
+                                        <Button variant="outline" size="sm" @click="approveClient(client)"
+                                            class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-700 mr-2">
+                                        Approve
+                                    </Button>
+                                    <Button variant="outline" size="sm" @click="unapproveClient(client)"
+                                            class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-700">
+                                        Unapprove
+                                    </Button>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                            <TableRow v-if="clients?.length === 0" :key="'empty'">
+                                <TableCell colspan="7" class="text-center py-8 text-muted-foreground">
+                                    No pending clients found.
+                                </TableCell>
+                            </TableRow>
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+        </div>
+    </AppLayout>
+    </div>
+</template>
+
+
 <script setup lang="ts">
 import AppLayout from '@/layouts/ReceptionistLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { type BreadcrumbItem } from '@/types';
+import { BreadcrumbItem } from '@/types';
+import { ref } from 'vue';
+import { router } from '@inertiajs/vue3';
+import { Button } from '@/components/ui/button';
 import { computed } from "vue";
 import {
     Table,
@@ -9,28 +77,36 @@ import {
     TableCell,
     TableHead,
     TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+    TableRow
+} from '@/components/ui/table';
+import { Card, CardContent } from '@/components/ui/card';
 
-// Define props for receiving client data
-const props = defineProps<{
-    clients: any[];
-}>();
 
-// Format clients' data for the table
-const formattedClients = computed(() =>
-    props.clients.map(client => ({
-        id: client.id,
-        name: client.user?.name || "N/A",
-        email: client.user?.email || "N/A",
-        mobile: client.mobile || "N/A",
-        country: client.country || "N/A",
-        gender: client.gender || "N/A",
-        // status: client.status || "Pending"
-    }))
-);
 
-// Define breadcrumbs for navigation
+interface Client {
+    id: number;
+    user?: {
+        id: number;
+        name: string;
+        email: string;
+    };
+    mobile: string;
+    country: string;
+    gender: string;
+}
+
+import { PropType } from 'vue';
+
+const props = defineProps({
+    clients: {
+        type: Array as PropType<Client[]>,
+        required: true,
+    },
+});
+// const clients = ref(props.clients);
+const clients = computed(() => props.clients);
+
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Receptionist Dashboard',
@@ -41,97 +117,18 @@ const breadcrumbs: BreadcrumbItem[] = [
         href: '/dashboard/receptionist/pending-clients',
     }
 ];
+
+
+const approveClient = (client: Client) => {
+    router.patch(`/dashboard/receptionist/clients/${client.id}`);
+};
+
+const unapproveClient = (client: Client) => {
+
+    console.log(client);
+    router.delete(`/dashboard/receptionist/clients/delete/${client.id}`);
+};
 </script>
 
-<template>
-    <div >
-        <Head title="Pending Clients" />
 
-        <AppLayout :breadcrumbs="breadcrumbs">
-            <div class="flex flex-col gap-6 rounded-xl p-6 text-white shadow-md">
-                <h2 class="text-2xl font-bold text-white">Pending Clients</h2>
-
-                <div class="bg-[#121212] p-6 rounded-lg shadow-md">
-
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead class="w-16 text-gray-300">ID</TableHead>
-                                <TableHead class="text-gray-300">Name</TableHead>
-                                <TableHead class="text-gray-300">Email</TableHead>
-                                <TableHead class="text-gray-300">Mobile</TableHead>
-                                <TableHead class="text-gray-300">Country</TableHead>
-                                <TableHead class="text-gray-300">Gender</TableHead>
-                                <TableHead class="text-center text-gray-300">Action</TableHead>
-                            </TableRow>
-                        </TableHeader>
-
-                        <TableBody>
-                            <TableRow v-for="client in formattedClients" :key="client.id" class="hover:bg-gray-800">
-                                <TableCell class="font-medium text-gray-200">{{ client.id }}</TableCell>
-                                <TableCell class="text-gray-200">{{ client.name }}</TableCell>
-                                <TableCell class="text-gray-200">{{ client.email }}</TableCell>
-                                <TableCell class="text-gray-200">{{ client.mobile }}</TableCell>
-                                <TableCell class="text-gray-200">{{ client.country }}</TableCell>
-                                <TableCell class="text-gray-200">{{ client.gender }}</TableCell>
-                                <!-- <TableCell class="text-center">
-                                    <span class="px-2 py-1 text-sm font-semibold rounded"
-                                          :class="client.status === 'Pending' ? 'bg-yellow-500 text-black' : 'bg-green-500 text-white'">
-                                        {{ client.status }}
-                                    </span>
-                                </TableCell> -->
-                                <TableCell class="text-center">
-                                    <button @click="approveClient(client.id)"
-                                            class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-700 mr-2">
-                                        Approve
-                                    </button>
-                                    <button @click="unapproveClient(client.id)"
-                                            class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-700">
-                                        Unapprove
-                                    </button>
-                                </TableCell>
-                            </TableRow>
-
-                            <!-- Show this row if no clients exist -->
-                            <TableRow v-if="formattedClients.length === 0">
-                                <TableCell colspan="7" class="text-center py-8 text-gray-400">
-                                    No pending clients found.
-                                </TableCell>
-                            </TableRow>
-                        </TableBody>
-                    </Table>
-                </div>
-            </div>
-        </AppLayout>
-    </div>
-</template>
-
-<style scoped>
-h2 {
-    font-family: 'Arial', sans-serif;
-}
-body {
-    background-color: #121212; /* Dark background */
-    color: #ffffff; /* White text for contrast */
-}
-
-.card, .table {
-    background-color: #1e1e1e; /* Slightly lighter dark for content */
-    color: #ffffff;
-    border-radius: 8px;
-}
-
-.sidebar {
-    background-color: #111111;
-}
-
-.table th, .table td {
-    border-color: #333;
-}
-
-.badge {
-    background-color: #28a745;
-    color: #ffffff;
-}
-
-</style>
+<style></style>
