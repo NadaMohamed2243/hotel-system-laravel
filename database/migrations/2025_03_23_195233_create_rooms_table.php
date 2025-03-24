@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('number')->unique(); // Must be at least 4 digits
             $table->integer('capacity');
             $table->integer('price');
-            $table->foreignId('manager_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('manager_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->timestamps();
             // $table->foreignId('floor_id')->constrained()->onDelete('cascade');
             // $table->boolean('is_booked')->default(false);
