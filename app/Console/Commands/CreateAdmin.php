@@ -32,15 +32,14 @@ class CreateAdmin extends Command
         $email = $this->option('email') ?? $this->ask('Enter admin email');
         $password = $this->option('password') ?? $this->secret('Enter admin password');
 
-        // Validate input
         $validator = Validator::make([
             'name' => $name,
             'email' => $email,
             'password' => $password,
         ], [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'string', 'min:6'],
+            'name' => ['required', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'min:6'],
         ]);
 
         if ($validator->fails()) {
@@ -51,7 +50,6 @@ class CreateAdmin extends Command
             return 1;
         }
 
-        // Create admin user
         $user = User::create([
             'name' => $name,
             'email' => $email,
