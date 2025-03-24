@@ -3,16 +3,16 @@ use App\Http\Controllers\ClientController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\ManagerController;
+use App\Http\Controllers\Auth\RegisteredUserController;  //H
+use Illuminate\Support\Facades\Auth;//H
+
 
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
-// Client dashboard - only accessible by clients
-Route::get('dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified', 'client.only'])->name('dashboard');
+
 
 // Admin dashboard - requires access admin panel permission
 Route::get('admin/dashboard', function () {
@@ -48,6 +48,29 @@ Route::prefix('dashboard/receptionist')->middleware(['auth', 'verified'])->group
     Route::PATCH('/clients/{client}', [ClientController::class, 'update'])->name('receptionist.update');
     Route::delete('/clients/delete/{id}', [ClientController::class, 'delete'])->name('receptionist.unapproveClient');
 });
+
+//-----------------------------------client  //H --------------------------------------------
+Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
+Route::post('/register', [RegisteredUserController::class, 'store']);
+
+
+Route::get('/pending-approval', function () {
+    return Inertia::render('PendingApproval');
+})->name('pending.approval')->middleware('auth');
+
+
+// Client dashboard - only accessible by clients
+Route::get('/dashboard', function () {
+    $user = Auth::user();
+    $user->load('client');
+
+    if ($user->client && $user->client->status !== 'approved') {
+        return redirect()->route('pending.approval');
+    }
+
+    return Inertia::render('Dashboard');
+})->middleware(['auth'])->name('dashboard');
+
 
 
 require __DIR__.'/settings.php';
