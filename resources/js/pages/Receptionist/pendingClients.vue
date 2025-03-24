@@ -96,7 +96,8 @@ const breadcrumbs: BreadcrumbItem[] = [
 // };
 
 const approveClient = async (client: Client) => {
-  await router.patch(`/dashboard/receptionist/clients/${client.id}`);
+//   await
+  router.patch(`/dashboard/receptionist/clients/${client.id}`);
   router.get(route('receptionist.pendingClients'), {
     page: props.pagination.page, // Preserve the current page
     pageSize: props.pagination.pageSize,
@@ -104,7 +105,8 @@ const approveClient = async (client: Client) => {
 };
 
 const unapproveClient = async (client: Client) => {
-  await router.delete(`/dashboard/receptionist/clients/delete/${client.id}`);
+//   await
+  router.delete(`/dashboard/receptionist/clients/delete/${client.id}`);
   router.get(route('receptionist.pendingClients'), {
     page: props.pagination.page, // Preserve the current page
     pageSize: props.pagination.pageSize,
