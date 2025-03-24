@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/ReceptionistLayout.vue';
+// import AppLayout from '@/layouts/ReceptionistLayout.vue';
+import AppLayout from '@/layouts/AdminAppLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { type BreadcrumbItem } from '@/types';
 import { ref, computed, h } from 'vue';
@@ -83,16 +84,6 @@ const breadcrumbs: BreadcrumbItem[] = [
     href: '/dashboard/receptionist/pending-clients',
   },
 ];
-
-// const approveClient = (client: Client) => {
-//   router.patch(`/dashboard/receptionist/clients/${client.id}`);
-//   router.reload();
-// };
-
-// const unapproveClient = (client: Client) => {
-//   router.delete(`/dashboard/receptionist/clients/delete/${client.id}`);
-//   router.reload();
-// };
 
 const approveClient = async (client: Client) => {
   await router.patch(`/dashboard/receptionist/clients/${client.id}`);

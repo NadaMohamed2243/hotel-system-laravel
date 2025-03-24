@@ -14,12 +14,6 @@ class ClientController extends Controller
      */
     public function pendingClients()
     {
-        // $clients = Client::where('status', 'pending')->with('user')->get()->toArray();
-
-        // return Inertia::render('Receptionist/pendingClients', [
-        //     'clients' => $clients
-        // ]);
-
         // Get pagination parameters from the request
         $page = Request()->query('page', 1); // Default to page 1
         $pageSize = Request()->query('pageSize', 8); // Default to 9 rows per page
@@ -44,19 +38,6 @@ class ClientController extends Controller
      */
     public function approvedClients()
     {
-        // $user = Auth::user(); // Get the logged-in receptionist
-
-        // $clients = Client::where('approved_by', $user->id) // Only show clients approved by this receptionist
-        //     ->where('status', 'approved')
-        //     ->with('user')
-        //     ->get()->toArray();
-
-        // return Inertia::render('Receptionist/approvedClients', [
-        //     'clients' => $clients
-        // ]);
-
-
-
         $user = Auth::user(); // Get the logged-in receptionist
 
         // Get pagination parameters from the request

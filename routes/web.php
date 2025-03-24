@@ -38,8 +38,8 @@ Route::prefix('admin/managers')->middleware(['auth', 'verified'])->group(functio
 //-----------------------------------receptionist--------------------------------------------
 Route::prefix('dashboard/receptionist')->middleware(['auth', 'verified'])->group(function () {
     Route::get('/', function () {
-        return Inertia::render('ReceptionistDashboard');
-    })->name('ReceptionistDashboard');
+        return Inertia::render('AdminDashboard');
+    })->name('receptionist.dashboard');
 
     Route::get('/clients/pending', [ClientController::class, 'pendingClients'])->name('receptionist.pendingClients');
     Route::get('/clients/approved', [ClientController::class, 'approvedClients'])->name('receptionist.approvedClients');

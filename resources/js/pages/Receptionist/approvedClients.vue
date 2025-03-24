@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/ReceptionistLayout.vue';
+// import AppLayout from '@/layouts/ReceptionistLayout.vue';
+import AppLayout from '@/layouts/AdminAppLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { type BreadcrumbItem } from '@/types';
 import { ref, computed ,h } from 'vue';
@@ -34,7 +35,7 @@ const props = defineProps<{
 }>();
 
 const clients = computed(() => props.clients);
-// console.log(clients.value);
+
 const columns = [
   {
     accessorKey: 'name',
