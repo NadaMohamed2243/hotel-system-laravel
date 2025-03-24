@@ -77,8 +77,8 @@ class ManagerController extends Controller
         $managers = $this->getFormattedManagers();
 
         return redirect()->route('managers.index')
-            ->with('success', 'Manager deleted successfully')
-            ->with('managers', $managers);
+            ->with('success', 'Manager deleted successfully');
+            //->with('managers', $managers);
     }
 
     // public function edit(User $user)
