@@ -135,8 +135,7 @@ const emit = defineEmits(['pagination-change']);
         <!-- Pagination Controls -->
         <div class="flex items-center justify-end space-x-2 py-4">
             <div class="flex-1 text-sm text-muted-foreground">
-                {{ table.getFilteredSelectedRowModel().rows.length }} of
-                {{ table.getFilteredRowModel().rows.length }} row(s) selected.
+                {{ table.getFilteredRowModel().rows.length }} row(s).
             </div>
             <div class="space-x-2">
                 <Button variant="outline" size="sm" :disabled="!table.getCanPreviousPage()"
