@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::table('clients', function (Blueprint $table) {
             $table->string('mobile')->nullable();
             $table->string('country')->nullable();
-            $table->enum('gender', ['male', 'female', 'other'])->nullable();
+            $table->enum('gender', ['male', 'female'])->nullable();
         });
     }
 

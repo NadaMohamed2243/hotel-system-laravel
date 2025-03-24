@@ -17,7 +17,7 @@ export interface Client {
   };
   mobile: string | null;
   country: string | null;
-  gender: 'male' | 'female' | 'other' | null;
+  gender: 'male' | 'female' | null;
 }
 
 const props = defineProps<{
@@ -85,15 +85,33 @@ const breadcrumbs: BreadcrumbItem[] = [
   },
 ];
 
+// const approveClient = async (client: Client) => {
+//   await router.patch(`/dashboard/receptionist/clients/${client.id}`);
+//   router.visit(route('receptionist.pendingClients')); // Navigate to the same page
+// };
+
+// const unapproveClient = async (client: Client) => {
+//   await router.delete(`/dashboard/receptionist/clients/delete/${client.id}`);
+//   router.visit(route('receptionist.pendingClients')); // Navigate to the same page
+// };
+
 const approveClient = async (client: Client) => {
   await router.patch(`/dashboard/receptionist/clients/${client.id}`);
-  router.visit(route('receptionist.pendingClients')); // Navigate to the same page
+  router.get(route('receptionist.pendingClients'), {
+    page: props.pagination.page, // Preserve the current page
+    pageSize: props.pagination.pageSize,
+  });
 };
 
 const unapproveClient = async (client: Client) => {
   await router.delete(`/dashboard/receptionist/clients/delete/${client.id}`);
-  router.visit(route('receptionist.pendingClients')); // Navigate to the same page
+  router.get(route('receptionist.pendingClients'), {
+    page: props.pagination.page, // Preserve the current page
+    pageSize: props.pagination.pageSize,
+  });
 };
+
+
 </script>
 
 <template>

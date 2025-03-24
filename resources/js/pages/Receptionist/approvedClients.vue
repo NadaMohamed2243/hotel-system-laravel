@@ -22,7 +22,7 @@ export interface Client {
   };
   mobile: string | null;
   country: string | null;
-  gender: 'male' | 'female' | 'other' | null;
+  gender: 'male' | 'female' | null;
 }
 
 const props = defineProps<{
@@ -73,7 +73,7 @@ const columns = [
     accessorKey: 'gender',
     header: () => h('div', { class: 'text-left' }, 'Gender'),
     cell: ({ row }) => {
-      const gender = row.original.gender || 'N/A';
+      const gender = row.original.gender || 'male';
       return h('div', { class: 'text-left font-medium' }, gender);
     },
   },
