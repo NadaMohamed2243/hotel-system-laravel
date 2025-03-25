@@ -11,6 +11,29 @@ use Illuminate\Support\Facades\Log;
 
 class ClientController extends Controller
 {
+    public function index(){
+        $user = auth()->user();
+        $clients = User::where('role', 'client')
+        ->with('client') // Assuming a one-to-one relationship between User and Client
+        ->get()
+        ->map(function ($user) {
+            return [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->client->mobile ?? 'N/A',
+                'approved_by' => $user->client->approved_by ?? 'N/A',
+                'gender' => $user->client->gender ?? 'N/A',
+                'status' => $user->client->status ?? 'N/A',
+                'country' => $user->client->country ?? 'N/A',
+            ];
+        });
+        // dd("hello");
+        // dd($clients);
+        return Inertia::render('Clients/Index', [
+            'clients' => $clients
+        ]);
+    }
     /**
      * Display a list of pending clients.
      */
