@@ -68,6 +68,17 @@ Route::prefix('manager/rooms')->
         Route::put('/{room}', [RoomController::class, 'update'])->name('rooms.update');
 });
 
+//-----------------------------------Clients--------------------------------------------
+Route::prefix('manager/clients')->
+    middleware(['auth', 'verified','permission:manage clients'])->
+    group(function () {
+        Route::get('/', [ClientController::class,'index'])->name('clients.index');
+        //Route::post('/', [RoomController::class, 'store'])->name('rooms.store');
+        //Route::delete('/{room}', [RoomController::class, 'destroy'])->name('rooms.destroy');
+        //Route::get('/{room}/edit', [RoomController::class, 'edit'])->name('rooms.edit');
+        //Route::put('/{room}', [RoomController::class, 'update'])->name('rooms.update');
+});
+
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';
