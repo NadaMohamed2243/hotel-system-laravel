@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Client;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Notifications\ClientApprovedNotification;
+use Illuminate\Support\Facades\Log;
 
 class ClientController extends Controller
 {
@@ -93,8 +95,10 @@ class ClientController extends Controller
             'approved_by' => $user->id
         ]);
 
+        $client->user->notify(new ClientApprovedNotification());
+
         return redirect()->route('receptionist.pendingClients')
-            ->with('success', 'Client approved successfully.');
+            ->with('success', 'Client approved successfully.  Email sent.');
     }
 
     /**
