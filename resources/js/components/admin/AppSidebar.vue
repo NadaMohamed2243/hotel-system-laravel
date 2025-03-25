@@ -35,7 +35,7 @@ const mainNavItems = computed(() => {
     }
 
     // Add other menu items based on permissions
-    if (can.value.view_receptionists || can.value.manage_receptionists) {
+    if (can.value.manage_receptionists) {
         items.push({
             title: 'Manage Receptionists',
             href: '/admin/receptionists',
@@ -43,7 +43,7 @@ const mainNavItems = computed(() => {
         });
     }
 
-    if (can.value.view_clients || can.value.manage_clients) {
+    if (can.value.manage_clients) {
         items.push({
             title: 'Manage Pending Clients',
             href: '/dashboard/receptionist/clients/pending',
@@ -62,7 +62,7 @@ const mainNavItems = computed(() => {
 
     }
 
-    if (can.value.view_floors || can.value.manage_floors) {
+    if (can.value.manage_floors) {
         items.push({
             title: 'Manage Floors',
             href: '/admin/floors',
@@ -70,7 +70,7 @@ const mainNavItems = computed(() => {
         });
     }
 
-    if (can.value.view_rooms || can.value.manage_rooms) {
+    if (can.value.manage_rooms) {
         items.push({
             title: 'Manage Rooms',
             href: '/admin/rooms',
