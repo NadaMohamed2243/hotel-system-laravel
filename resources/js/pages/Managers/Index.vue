@@ -245,6 +245,7 @@ const removeAvatar = () => {
     avatarPreview.value = null;
     avatarFile.value = null;
     form.value.avatar = null;
+    form.value.remove_avatar = true;
     if (avatarInput.value) {
         avatarInput.value.value = '';
     }
@@ -279,15 +280,10 @@ const confirmDelete = () => {
 
     router.delete(`/admin/managers/${managerToDelete.value.id}`, {
         preserveScroll: true,
-        onSuccess: (page) => {
+        onSuccess: () => {
             showDeleteDialog.value = false;
             managerToDelete.value = null;
-            if (page.props.managers) {
-                managers.value = page.props.managers;
-            }
-            else {
-                router.reload({ only: ['managers'] });
-            }
+            managers.value.splice(managers.value.indexOf(managerToDelete.value) - 1, 1);
         },
         onFinish: () => {
             isSubmitting.value = false;

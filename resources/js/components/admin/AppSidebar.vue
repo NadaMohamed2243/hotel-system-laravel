@@ -45,10 +45,21 @@ const mainNavItems = computed(() => {
 
     if (can.value.view_clients || can.value.manage_clients) {
         items.push({
-            title: 'Manage Clients',
-            href: '/admin/clients',
+            title: 'Manage Pending Clients',
+            href: '/dashboard/receptionist/clients/pending',
             icon: Users,
         });
+        items.push({
+            title: 'My Approved Clients',
+            href: '/dashboard/receptionist/clients/approved',
+            icon: Users,
+        });
+        items.push({
+            title: 'My Clients Reservations',
+            href: '/dashboard/receptionist/clients/reservations',
+            icon: Hotel,
+        });
+
     }
 
     if (can.value.view_floors || can.value.manage_floors) {
