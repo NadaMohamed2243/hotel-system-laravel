@@ -8,19 +8,19 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::table('floors', function (Blueprint $table) {
-            $table->foreignId('manager_id')
-                  ->after('number')
-                  ->constrained('users')
-                  ->onDelete('cascade');
-        });
+        // Schema::table('floors', function (Blueprint $table) {
+        //     $table->foreignId('manager_id')
+        //           ->after('number')
+        //           ->constrained('users')
+        //           ->onDelete('cascade');
+        // });
     }
 
     public function down()
     {
-        Schema::table('floors', function (Blueprint $table) {
-            $table->dropForeign(['manager_id']);
-            $table->dropColumn('manager_id');
-        });
+        // Schema::table('floors', function (Blueprint $table) {
+        //     $table->dropForeign(['manager_id']);
+        //     $table->dropColumn('manager_id');
+        // });
     }
 };
