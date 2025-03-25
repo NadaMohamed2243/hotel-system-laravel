@@ -5,6 +5,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\ManagerController;
 use App\Http\Controllers\Auth\RegisteredUserController;  //H
 use Illuminate\Support\Facades\Auth;//H
+use App\Http\Controllers\ReservationController; //H
 
 
 
@@ -68,8 +69,21 @@ Route::get('/dashboard', function () {
         return redirect()->route('pending.approval');
     }
 
-    return Inertia::render('Dashboard');
+    return Inertia::render('HClient/ClientDashboard');
 })->middleware(['auth'])->name('dashboard');
+
+
+
+// Client reservations
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/my-reservations', [ReservationController::class, 'myReservations']);
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/client/reservations', function () {
+        return Inertia::render('HClient/MyReservations');
+    })->name('client.reservations');
+});
 
 
 
