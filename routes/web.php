@@ -27,7 +27,7 @@ Route::prefix('admin/managers')->middleware(['auth', 'verified'])->group(functio
     Route::get('/{user}/edit', [ManagerController::class, 'edit'])->name('managers.edit');
     Route::put('/{user}', [ManagerController::class, 'update'])->name('managers.update');
 });
-//Room routes
+//Room routes for admin
 Route::prefix('admin/rooms')->middleware(['auth', 'verified'])->group(function () {
     Route::get('/', [RoomController::class, 'index'])->name('rooms.index');
     Route::post('/', [RoomController::class, 'store'])->name('rooms.store');
@@ -35,6 +35,15 @@ Route::prefix('admin/rooms')->middleware(['auth', 'verified'])->group(function (
     Route::get('/{room}/edit', [RoomController::class, 'edit'])->name('rooms.edit');
     Route::put('/{room}', [RoomController::class, 'update'])->name('rooms.update');
 });
+//Room routes for manager
+Route::prefix('manager/rooms')->middleware(['auth', 'verified'])->group(function () {
+    Route::get('/', [RoomController::class, 'index'])->name('rooms.index');
+    Route::post('/', [RoomController::class, 'store'])->name('rooms.store');
+    Route::delete('/{room}', [RoomController::class, 'destroy'])->name('rooms.destroy');
+    Route::get('/{room}/edit', [RoomController::class, 'edit'])->name('rooms.edit');
+    Route::put('/{room}', [RoomController::class, 'update'])->name('rooms.update');
+});
+
 // These routes are now handled in the routes group above
 // Route::delete('/admin/managers/{user}', [ManagerController::class, 'destroy'])->name('managers.destroy');
 // Route::get('/admin/managers/{user}/edit', [ManagerController::class, 'edit'])->name('managers.edit');
