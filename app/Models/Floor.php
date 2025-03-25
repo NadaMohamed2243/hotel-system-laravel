@@ -53,13 +53,13 @@ class Floor extends Model
         return $this->belongsTo(User::class, 'manager_id');
     }
 
-    // public function rooms(): HasMany
-    // {
-    //     return $this->hasMany(Room::class);
-    // }
+    public function rooms(): HasMany
+    {
+        return $this->hasMany(Room::class);
+    }
 
-    // public function canBeDeleted(): bool
-    // {
-    //     return !$this->rooms()->exists();
-    // }
+    public function canBeDeleted(): bool
+    {
+        return !$this->rooms()->exists();
+    }
 }

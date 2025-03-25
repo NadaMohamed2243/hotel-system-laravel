@@ -52,18 +52,18 @@
                                             <Eye class="h-4 w-4 mr-1" />
                                             View
                                         </Button>
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm" 
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
                                             @click="openEditDialog(floor)"
                                             :disabled="!floor.can_edit"
                                         >
                                             <Pencil class="h-4 w-4 mr-1" />
                                             Edit
                                         </Button>
-                                        <Button 
-                                            variant="destructive" 
-                                            size="sm" 
+                                        <Button
+                                            variant="destructive"
+                                            size="sm"
                                             @click="openDeleteDialog(floor)"
                                             :disabled="!floor.can_delete"
                                         >
@@ -123,6 +123,7 @@ const viewDialog = ref(null);
 const confirmationDialog = ref(null);
 const selectedFloor = ref({});
 const floorToDelete = ref(null);
+
 
 const openAddDialog = () => {
     addFloorDialog.value.open();

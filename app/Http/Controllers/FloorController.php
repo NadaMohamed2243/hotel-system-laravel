@@ -26,7 +26,7 @@ class FloorController extends Controller
 
         // Fetch floors with relationships
         $query = Floor::with('manager');
-        
+
         if (Auth::user()->role !== 'admin') {
             $query->where('manager_id', Auth::id());
         }
@@ -80,8 +80,9 @@ class FloorController extends Controller
 
         $floor = Floor::create($validated);
 
-        return redirect()->route('floors.index')
-            ->with('success', 'Floor created successfully');
+        return Inertia::render('Floors/Index', [
+            'floors' => Floor::all()
+        ]);
     }
 
     public function show(Floor $floor)
@@ -92,38 +93,39 @@ class FloorController extends Controller
     }
 
     public function edit(Floor $floor)
-    {
-        if (Auth::user()->role !== 'admin' && $floor->manager_id !== Auth::id()) {
-            return redirect()->back()->with('error', 'You are not authorized to edit this floor.');
-        }
-
-        return Inertia::render('Floors/Edit', [
-            'floor' => $floor,
-            'managers' => User::where('role', 'manager')->get(['id', 'name', 'email'])
-        ]);
+{
+    if (Auth::user()->role !== 'admin' && $floor->manager_id !== Auth::id()) {
+        return redirect()->back()->with('error', 'You are not authorized to edit this floor.');
     }
+
+    return Inertia::render('Floors/Edit', [
+        'floor' => $floor->load('manager'),
+        'managers' => User::where('role', 'manager')->get(['id', 'name', 'email'])
+    ]);
+}
 
     public function update(Request $request, Floor $floor)
-    {
-        if (Auth::user()->role !== 'admin' && $floor->manager_id !== Auth::id()) {
-            return redirect()->back()->with('error', 'You are not authorized to update this floor.');
-        }
-
-        $validated = $request->validate([
-            'name' => 'required|string|min:3|max:255',
-            'manager_id' => 'sometimes|exists:users,id'
-        ]);
-
-        // Don't allow changing manager unless admin
-        if (Auth::user()->role !== 'admin') {
-            unset($validated['manager_id']);
-        }
-
-        $floor->update($validated);
-
-        return redirect()->route('floors.index')
-            ->with('success', 'Floor updated successfully');
+{
+    if (Auth::user()->role !== 'admin' && $floor->manager_id !== Auth::id()) {
+        return redirect()->back()->with('error', 'You are not authorized to update this floor.');
     }
+
+    $validated = $request->validate([
+        'name' => 'required|string|min:3|max:255',
+        'manager_id' => 'sometimes|exists:users,id'
+    ]);
+
+    if (Auth::user()->role !== 'admin') {
+        unset($validated['manager_id']);
+    }
+
+    $floor->update($validated);
+
+    // Use the correct route name (assuming admin prefix)
+    return redirect()->route('admin.floors.index')
+        ->with('success', 'Floor updated successfully');
+}
+
 
     public function destroy(Floor $floor)
     {

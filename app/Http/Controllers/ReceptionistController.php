@@ -25,7 +25,7 @@ class ReceptionistController extends Controller
         'managers' => $managers
         ]);
     }
-    
+
 
 
     public function destroy(Receptionist $receptionist)
@@ -40,6 +40,7 @@ class ReceptionistController extends Controller
 
     public function index()
     {
+        // Check permissions
         try {
             if (!auth()->user()->hasPermissionTo('manage receptionists')) {
                 return abort(403, 'You do not have permission to view receptionists.');
@@ -50,42 +51,46 @@ class ReceptionistController extends Controller
                 return abort(403, 'Unauthorized action.');
             }
         }
-    
-        // Fetch receptionists with relationships
+
+        // Determine if this is a manager route
+        $isManagerRoute = request()->is('manager/receptionists*');
+
+        // Base query
         $query = Receptionist::with(['user', 'manager']);
-        
-        if (Auth::user()->role !== 'admin') {
-            $query->where('manager_id', Auth::id());
+
+        // Filter by manager if not admin or if on manager route
+        if (auth()->user()->role === 'manager' || $isManagerRoute) {
+            $query->where('manager_id', auth()->id());
         }
-    
-        $receptionists = $query->get()->map(function ($receptionist) {
+
+        // Get receptionists with only needed data
+        $receptionists = $query->get()->map(function ($receptionist) use ($isManagerRoute) {
             return [
-                // Receptionist data
                 'id' => $receptionist->id,
                 'is_banned' => $receptionist->is_banned,
                 'created_at' => $receptionist->created_at->format('Y-m-d H:i:s'),
-                
-                // User data
                 'name' => $receptionist->user->name,
                 'email' => $receptionist->user->email,
                 'national_id' => $receptionist->user->national_id,
-                'avatar' => $receptionist->user->avatar_image ? 
-                    asset('storage/' . $receptionist->user->avatar_image) : null,
-                
-                // Manager data
-                'manager_name' => $receptionist->manager->name,
-                'manager_email' => $receptionist->manager->email,
+                'avatar' => $receptionist->avatar_image
+                    ? asset('storage/' . $receptionist->avatar_image)
+                    : null,
+                // Only include manager info if not manager route
+                'manager_name' => $isManagerRoute ? null : $receptionist->manager->name,
+                'manager_email' => $isManagerRoute ? null : $receptionist->manager->email,
             ];
         });
-    
-        $managers = User::where('role', 'manager')
-                ->select('id', 'name', 'email')
-                ->get();
-        
+
+        // Only get managers list if not manager route
+        $managers = $isManagerRoute
+            ? []
+            : User::where('role', 'manager')->get(['id', 'name', 'email']);
+
         return Inertia::render('Receptionists/Index', [
             'receptionists' => $receptionists,
-            'managers' => $managers
-            ]);
+            'managers' => $managers,
+            'isManagerView' => $isManagerRoute // Pass this to the frontend
+        ]);
     }
 
     public function show(Receptionist $receptionist)
@@ -129,8 +134,10 @@ class ReceptionistController extends Controller
             'manager_id' => $validated['manager_id'],
         ]);
 
-        return redirect()->route('admin.receptionists.index')
-            ->with('success', 'Receptionist added successfully');
+        return Inertia::render('Receptionists/Index', [
+            'receptionists' => Receptionist::with(['user', 'manager'])->get(),
+            'success' => 'Receptionist added successfully'
+        ]);
     }
 
 
@@ -181,23 +188,23 @@ class ReceptionistController extends Controller
         if (Auth::user()->role === 'manager' && $receptionist->manager_id !== Auth::id()) {
             return redirect()->back()->with('error', 'You are not authorized to ban this receptionist.');
         }
-    
+
         $receptionist->update([
             'is_banned' => true,
-            'banned_at' => now(), 
+            'banned_at' => now(),
         ]);
             return redirect()->back()->with('success', 'Receptionist banned successfully.');
     }
-    
+
     public function unban(Receptionist $receptionist)
     {
         if (Auth::user()->role === 'manager' && $receptionist->manager_id !== Auth::id()) {
             return redirect()->back()->with('error', 'You are not authorized to unban this receptionist.');
         }
-    
+
         $receptionist->update([
             'is_banned' => false,
-            'banned_at' => null, 
+            'banned_at' => null,
         ]);
             return redirect()->back()->with('success', 'Receptionist unbanned successfully.');
     }

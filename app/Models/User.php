@@ -52,6 +52,12 @@ class User extends Authenticatable
         ];
     }
 
+    // Relationship with Client
+    public function client()
+    {
+        return $this->hasOne(Client::class, 'user_id');
+    }
+
         /**
      * Define the relationship with the Receptionist model.
      *
