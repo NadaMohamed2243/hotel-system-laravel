@@ -41,6 +41,7 @@ class RoomController extends Controller
 
     public function store(Request $request)
     {
+        $user = auth()->user();
     // Validate input data
     $validatedData = $request->validate([
         'number' => ['required', 'string', 'digits_between:4,10', 'unique:rooms,number'],
