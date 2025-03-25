@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
+// use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Reservation;
 use Inertia\Inertia;
@@ -20,3 +20,5 @@ class ReservationController extends Controller
         return response()->json(['reservations' => $reservations]);
     }
 }
+
+

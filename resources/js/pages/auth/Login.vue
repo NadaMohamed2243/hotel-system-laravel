@@ -8,6 +8,8 @@ import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
+import { usePage } from '@inertiajs/vue3'
+import { router } from '@inertiajs/vue3'
 
 defineProps<{
     status?: string;
@@ -22,9 +24,25 @@ const form = useForm({
 
 const submit = () => {
     form.post(route('login'), {
-        onFinish: () => form.reset('password'),
+        onFinish: () => {
+            form.reset('password');
+        },
+        onSuccess: (response) => {
+            const user = usePage().props.auth.user
+            if (user.role === 'admin') {
+                router.visit(route('admin.dashboard'))
+            } else if (user.role === 'manager') {
+                router.visit(route('manager.dashboard'))
+            } else {
+                router.visit(route('home'))
+            }
+        },
     });
 };
+
+
+
+
 </script>
 
 <template>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\Receptionist;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,6 +33,26 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+        
+        $user = Auth::user();
+    
+        // Check if the user is a receptionist and is banned
+        if ($user->role === 'receptionist') {
+            $receptionist = Receptionist::where('user_id', $user->id)->first();
+
+            if ($receptionist && $receptionist->is_banned) {
+                Auth::logout();
+                return redirect()->route('login')->withErrors([
+                    'email' => 'Your account has been banned.',
+                ]);
+            }
+        }
+
+
+        if ($user->role === 'manager') {
+            return redirect()->intended(route('manager.dashboard'));
+        }
+    
 
         if (Auth::user()->role == 'receptionist') {
             return redirect()->intended(route('receptionist.dashboard', absolute: false));

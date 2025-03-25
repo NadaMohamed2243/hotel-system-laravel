@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Client;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
+use App\Notifications\ClientApprovedNotification;
+use Illuminate\Support\Facades\Log;
 
 class ClientController extends Controller
 {
@@ -61,24 +63,6 @@ class ClientController extends Controller
         ]);
     }
 
-    /**
-     * Display reservations of clients approved by the logged-in receptionist.
-     */
-    public function clientReservations()
-    {
-        // $user = Auth::user();
-
-        // $clients = Client::where('approved_by', $user->id)
-        //     ->where('status', 'approved')
-        //     ->with('reservations') // Assuming the Client model has a `reservations` relationship
-        //     ->get();
-
-        // return Inertia::render('Receptionist/clientReservations', [
-        //     'clients' => $clients
-        // ]);
-
-        return Inertia::render('Receptionist/clientReservations');
-    }
 
     /**
      * Approve a client (update the status to approved).
@@ -93,8 +77,10 @@ class ClientController extends Controller
             'approved_by' => $user->id
         ]);
 
+        $client->user->notify(new ClientApprovedNotification());
+
         return redirect()->route('receptionist.pendingClients')
-            ->with('success', 'Client approved successfully.');
+            ->with('success', 'Client approved successfully.  Email sent.');
     }
 
     /**
