@@ -38,7 +38,7 @@ const mainNavItems = computed(() => {
     }
 
     // Add other menu items based on permissions
-    if (can.value.view_receptionists || can.value.manage_receptionists) {
+    if (can.value.manage_receptionists) {
 
         if (role.value == "manager") {
             items.push({
@@ -58,7 +58,7 @@ const mainNavItems = computed(() => {
 
     }
 
-    if (can.value.view_clients || can.value.manage_clients) {
+    if (can.value.manage_clients) {
         items.push({
             title: 'Manage Pending Clients',
             href: '/dashboard/receptionist/clients/pending',
@@ -77,7 +77,7 @@ const mainNavItems = computed(() => {
 
     }
 
-    if (can.value.view_floors || can.value.manage_floors) {
+    if (can.value.manage_floors) {
 
         if (role.value == "manager") {
             items.push({
