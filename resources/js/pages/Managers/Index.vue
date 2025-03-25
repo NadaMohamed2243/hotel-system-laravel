@@ -20,7 +20,7 @@
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <TableRow v-for="manager in managers" :key="manager.id">
+                            <TableRow v-for="manager in managers.data" :key="manager.id">
                                 <TableCell class="font-medium">{{ manager.id }}</TableCell>
                                 <TableCell>
                                     <img v-if="manager.avatar" :src="manager.avatar" alt="Avatar"
@@ -53,6 +53,19 @@
                             </TableRow>
                         </TableBody>
                     </Table>
+                    <div class="flex items-center justify-between p-4">
+                        <div class="text-sm text-gray-700">
+                            Showing {{ managers.from }} to {{ managers.to }} of {{ managers.total }} results
+                        </div>
+                        <div class="flex gap-2">
+                            <Button :disabled="!managers.prev_page_url" @click="changePage(managers.current_page - 1)">
+                                Previous
+                            </Button>
+                            <Button :disabled="!managers.next_page_url" @click="changePage(managers.current_page + 1)">
+                                Next
+                            </Button>
+                        </div>
+                    </div>
                 </CardContent>
             </Card>
         </div>
@@ -187,7 +200,7 @@ import { Label } from '@/components/ui/label';
 import { Pencil, Trash, Loader2, User as UserIcon } from 'lucide-vue-next';
 
 const props = defineProps({
-    managers: Array,
+    managers: Object,
 });
 
 const managers = ref(props.managers);
@@ -201,6 +214,7 @@ const editingManagerId = ref(null);
 const avatarInput = ref(null);
 const avatarPreview = ref(null);
 const avatarFile = ref(null);
+const currentPage = ref(props.managers.current_page);
 
 const form = ref({
     name: '',
@@ -279,11 +293,19 @@ const confirmDelete = () => {
     isSubmitting.value = true;
 
     router.delete(`/admin/managers/${managerToDelete.value.id}`, {
+        data: {
+            page: currentPage.value // Pass the current page
+        },
         preserveScroll: true,
-        onSuccess: () => {
+        onSuccess: (page) => {
             showDeleteDialog.value = false;
             managerToDelete.value = null;
-            managers.value.splice(managers.value.indexOf(managerToDelete.value) - 1, 1);
+            if (page.props.managers) {
+                managers.value.data = page.props.managers.data;
+            }
+            else {
+                router.reload({ only: ['managers'] });
+            }
         },
         onFinish: () => {
             isSubmitting.value = false;
@@ -303,6 +325,8 @@ const submitManager = () => {
         }
     });
 
+    formData.append('page', currentPage.value);
+
     if (avatarFile.value) {
         formData.append('avatar', avatarFile.value);
     } else if (form.value.avatar === null && isEditing.value) {
@@ -318,7 +342,7 @@ const submitManager = () => {
                 showManagerDialog.value = false;
                 resetForm();
                 if (page.props.managers) {
-                    managers.value = page.props.managers;
+                    managers.value.data = page.props.managers.data;
                 }
                 else {
                     router.reload({ only: ['managers'] });
@@ -355,6 +379,18 @@ const submitManager = () => {
             }
         });
     }
+};
+
+
+const changePage = (page) => {
+    router.get(
+        route('managers.index', { page: page }),
+        {},
+        {
+            preserveScroll: true,
+            only: ['managers']
+        }
+    );
 };
 </script>
 

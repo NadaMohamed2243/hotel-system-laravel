@@ -20,7 +20,7 @@ console.log(role.value);
 
 const dashboardItem = {
     title: 'Dashboard',
-    href: (role.value=="admin")?'/admin/dashboard':'/manager/dashboard',
+    href: (role.value == "admin") ? '/admin/dashboard' : '/manager/dashboard',
     icon: LayoutGrid,
 };
 
@@ -40,7 +40,7 @@ const mainNavItems = computed(() => {
     // Add other menu items based on permissions
     if (can.value.view_receptionists || can.value.manage_receptionists) {
 
-        if(role.value=="manager"){
+        if (role.value == "manager") {
             items.push({
                 title: 'Manage Receptionists',
                 href: '/manager/receptionists',
@@ -48,7 +48,7 @@ const mainNavItems = computed(() => {
             });
         }
 
-        else{
+        else {
             items.push({
                 title: 'Manage Receptionists',
                 href: '/admin/receptionists',
@@ -79,14 +79,14 @@ const mainNavItems = computed(() => {
 
     if (can.value.view_floors || can.value.manage_floors) {
 
-        if(role.value=="manager"){
+        if (role.value == "manager") {
             items.push({
                 title: 'Manage Floors',
                 href: '/manager/floors',
                 icon: Hotel,
             });
         }
-        else{
+        else {
             items.push({
                 title: 'Manage Floors',
                 href: '/admin/floors',
@@ -95,7 +95,7 @@ const mainNavItems = computed(() => {
         }
     }
 
-    if (can.value.view_rooms || can.value.manage_rooms) {
+    if (can.value.manage_rooms) {
         items.push({
             title: 'Manage Rooms',
             href: '/admin/rooms',
