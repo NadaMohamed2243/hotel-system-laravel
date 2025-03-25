@@ -65,22 +65,22 @@ class HandleInertiaRequests extends Middleware
         $permissions = [];
         $permissionChecks = [
             'manage_managers' => 'manage managers',
-            'view_managers' => 'view managers',
             'manage_receptionists' => 'manage receptionists',
-            'view_receptionists' => 'view receptionists',
             'manage_clients' => 'manage clients',
-            'view_client_details' => 'view client details',
-            'view_financial_info' => 'view financial info',
-            'manage_settings' => 'manage settings',
-            'view_system_logs' => 'view system logs',
-            'access_admin_panel' => 'access admin panel',
-            'manage_bookings' => 'manage bookings',
-            'view_bookings' => 'view bookings',
-            'view_rooms' => 'view rooms',
+            'manage_floors' => 'manage floors',
             'manage_rooms' => 'manage rooms',
-            'view_reports' => 'view reports',
-            'view_floors' => 'view floors',
-            'manage_floors' => 'manage floors'
+            'manage_reservations' => 'manage reservations',
+            
+            // View-only permissions
+            'view_reservations' => 'view reservations',
+            'view_client_reservations' => 'view client reservations',
+            'view_approved_clients' => 'view approved clients',
+            'view_unapproved_clients' => 'view unapproved clients',
+            'approve_client' => 'approve client',
+            
+            // Financial and system permissions
+            'view_financial_info' => 'view financial info',
+            
         ];
         
         foreach ($permissionChecks as $key => $permission) {
