@@ -6,29 +6,42 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Reservation;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ClientReservationController extends Controller
 {
-    public function index()
+
+    public function index(Request $request)
     {
+        try {
+            $validated = $request->validate([
+                'page' => 'sometimes|integer|min:1',
+                'pageSize' => 'sometimes|integer|min:1|max:100',
+            ]);
 
-        // Get the logged-in receptionist's ID
-        $receptionistId = Auth::id();
+            $page = $validated['page'] ?? 1;
+            $pageSize = $validated['pageSize'] ?? 8;
+            $receptionistId = Auth::id();
 
-        // Fetch reservations for clients approved by this receptionist
-        $reservations = Reservation::whereHas('client', function ($query) use ($receptionistId) {
-            $query->where('approved_by', $receptionistId);
-        })->with(['client.user', 'room'])->paginate(10); // Load relations & paginate
+            $reservations = Reservation::whereHas('client', function ($query) use ($receptionistId) {
+                $query->where('approved_by', $receptionistId);
+            })
+                ->with(['client.user:id,name,email', 'room:id,number'])
+                ->orderBy('created_at', 'desc')
+                ->paginate($pageSize, ['*'], 'page', $page);
 
-        // Debugging (Uncomment if needed)
-        // dd($reservations);
-        // dd($reservations->toArray());
+            return Inertia::render('Receptionist/clientReservations/index', [
+                'reservations' => $reservations->items(),
+                'pagination' => [ // Make sure this matches your frontend expectation
+                    'page' => $reservations->currentPage(),
+                    'pageSize' => $reservations->perPage(),
+                    'total' => $reservations->total(),
+                ],
+            ]);
 
-
-        // Return reservations to Inertia
-        return Inertia::render('Receptionist/clientReservations/index', [
-            'reservations' => $reservations
-        ]);
+        } catch (\Exception $e) {
+            Log::error('ClientReservationController error: ' . $e->getMessage());
+            return back()->with('error', 'Failed to load reservations');
+        }
     }
-
 }
