@@ -1,13 +1,17 @@
 <?php
 use App\Http\Controllers\ClientController;
+use App\Http\Controllers\ClientReservationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\ManagerController;
 use App\Http\Controllers\RoomController;
 
+<<<<<<< HEAD
 use App\Http\Controllers\ReceptionistController;
 use App\Http\Controllers\FloorController;
 
+=======
+>>>>>>> a8bf2123f45816642303a0ad1f5fd7efa7669913
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
@@ -43,7 +47,8 @@ Route::prefix('dashboard/receptionist')->middleware(['auth', 'verified'])->group
 
     Route::get('/clients/pending', [ClientController::class, 'pendingClients'])->name('receptionist.pendingClients');
     Route::get('/clients/approved', [ClientController::class, 'approvedClients'])->name('receptionist.approvedClients');
-    Route::get('/clients/reservations', [ClientController::class, 'clientReservations'])->name('receptionist.clientReservations');
+
+    Route::get('/clients/reservations', [ClientReservationController::class, 'index'])->name('receptionist.clientReservations.index');
 
     Route::PATCH('/clients/{client}', [ClientController::class, 'update'])->name('receptionist.update');
     Route::delete('/clients/delete/{id}', [ClientController::class, 'delete'])->name('receptionist.unapproveClient');
