@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\ManagerController;
 use App\Http\Controllers\ReceptionistController;
+use App\Http\Controllers\FloorController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome');
@@ -53,6 +54,23 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->group(function () {
         Route::post('/{receptionist}/unban', [ReceptionistController::class, 'unban'])->name('admin.receptionists.unban');
     });
 });
+
+
+//Floor Management
+
+Route::prefix('admin')->middleware(['auth', 'verified'])->group(function () {
+
+Route::prefix('floors')->group(function () {
+    Route::get('/', [FloorController::class, 'index'])->name('admin.floors.index');
+    Route::get('/create', [FloorController::class, 'create'])->name('admin.floors.create');
+    Route::post('/', [FloorController::class, 'store'])->name('admin.floors.store');
+    Route::get('/{floor}/edit', [FloorController::class, 'edit'])->name('admin.floors.edit');
+    Route::put('/{floor}', [FloorController::class, 'update'])->name('admin.floors.update');
+    Route::delete('/{floor}', [FloorController::class, 'destroy'])->name('admin.floors.destroy');
+});
+
+});
+
 
 
 // Manager-specific routes

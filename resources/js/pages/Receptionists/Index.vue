@@ -1,9 +1,34 @@
 <template>
     <AppLayout>
         <div class="flex flex-col gap-4 p-8">
+
+
+
+            <!-- Add Dialog -->
+            <AddReceptionistDialog ref="addReceptionistDialog" :managers="managers" />
+
+            <!-- View Dialog -->
+            <ViewReceptionistDialog ref="viewDialog" :receptionist="selectedReceptionist" />
+
+            <EditReceptionistDialog ref="editDialog" :managers="managers" />
+
+
+            <!-- Confirmation Dialog -->
+            <ConfirmationDialog
+                ref="confirmationDialog"
+                title="Delete Receptionist"
+                message="Are you sure you want to delete this receptionist? This action cannot be undone."
+                :receptionistName="receptionistToDelete?.name || ''"
+                :receptionistEmail="receptionistToDelete?.email || ''"
+                :receptionistManagerName="receptionistToDelete?.manager_name || ''"
+                @confirm="confirmDelete"
+                @cancel="cancelDelete"
+            />
+
+
             <div class="flex justify-between items-center mb-6">
-                <h1 class="text-2xl font-bold">Receptionists</h1>
-                <Button @click="openCreateDialog">Add Receptionist</Button>
+            <h1 class="text-2xl font-bold">Receptionists</h1>
+            <Button @click="openAddDialog">Add Receptionist</Button>
             </div>
 
             <Card class="w-full">
@@ -15,6 +40,7 @@
                                 <TableHead>Email</TableHead>
                                 <TableHead>Created_at</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead v-if="url.startsWith('/admin/receptionists')">Manager</TableHead>
                                 <TableHead class="text-center">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -23,14 +49,30 @@
                                 <TableCell>{{ receptionist.name }}</TableCell>
                                 <TableCell>{{ receptionist.email }}</TableCell>
                                 <TableCell>{{ receptionist.created_at || 'N/A' }}</TableCell>
-                                <TableCell>{{ receptionist.created_at || 'N/A' }}</TableCell>
+                                <TableCell>{{ receptionist.is_banned ? 'Banned' : 'Active' }}</TableCell>
+                                <TableCell v-if="url.startsWith('/admin/receptionists')">
+                                    {{ receptionist.manager_name || 'N/A' }}
+                                </TableCell>
                                 <TableCell class="text-center">
                                     <div class="flex justify-center gap-2">
+                                        <Button variant="outline" size="sm" @click="viewReceptionist(receptionist)">
+                                            <Eye class="h-4 w-4 mr-1" />
+                                            View
+                                        </Button>
                                         <Button variant="outline" size="sm" @click="openEditDialog(receptionist)">
                                             <Pencil class="h-4 w-4 mr-1" />
                                             Edit
                                         </Button>
-                                        <Button variant="destructive" size="sm" @click="deleteManager(receptionist)">
+                                        <Button 
+                                            :variant="receptionist.is_banned ? 'default' : 'destructive'" 
+                                            size="sm" 
+                                            @click="toggleBanStatus(receptionist)"
+                                        >
+                                            <Ban class="h-4 w-4 mr-1" />
+                                            {{ receptionist.is_banned ? 'Unban' : 'Ban' }}
+                                        </Button>
+                                         <!-- Delete Button -->
+                                         <Button variant="destructive" size="sm" @click="openDeleteDialog(receptionist)">
                                             <Trash class="h-4 w-4 mr-1" />
                                             Delete
                                         </Button>
@@ -48,114 +90,22 @@
             </Card>
         </div>
 
-        <Dialog v-model:open="showReceptionistDialog">
-            <DialogContent class="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle>{{ isEditing ? 'Edit Manager' : 'Add New Manager' }}</DialogTitle>
-                    <DialogDescription>
-                        {{ isEditing ? 'Update manager information.' : 'Create a new manager account.' }} Click save
-                        when you're done.
-                    </DialogDescription>
-                </DialogHeader>
-                <form @submit.prevent="submitManager">
-                    <div class="grid gap-4 py-4">
-                        <div class="grid gap-2">
-                            <Label>Avatar</Label>
-                            <div class="flex items-center space-x-4">
-                                <div class="flex-shrink-0">
-                                    <div v-if="avatarPreview" class="h-20 w-20 rounded-full overflow-hidden">
-                                        <img :src="avatarPreview" class="h-full w-full object-cover"
-                                            alt="Avatar Preview" />
-                                    </div>
-                                    <div v-else-if="isEditing && form.avatar"
-                                        class="h-20 w-20 rounded-full overflow-hidden">
-                                        <img :src="form.avatar" class="h-full w-full object-cover"
-                                            alt="Current Avatar" />
-                                    </div>
-                                    <div v-else
-                                        class="h-20 w-20 rounded-full bg-gray-200 flex items-center justify-center">
-                                        <UserIcon class="h-10 w-10 text-gray-500" />
-                                    </div>
-                                </div>
-                                <div>
-                                    <input type="file" ref="avatarInput" class="hidden" accept="image/*"
-                                        @change="handleAvatarChange" />
-                                    <Button type="button" variant="outline" size="sm"
-                                        @click="$refs.avatarInput.click()">
-                                        Change Avatar
-                                    </Button>
-                                    <Button v-if="avatarPreview || (isEditing && form.avatar)" type="button"
-                                        variant="ghost" size="sm" @click="removeAvatar">
-                                        Remove
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="grid gap-2">
-                            <Label for="name">Name</Label>
-                            <Input id="name" v-model="form.name" placeholder="John Doe"
-                                :class="{ 'border-red-500': errors.name }" />
-                            <p v-if="errors.name" class="text-red-500 text-sm mt-1">{{ errors.name }}</p>
-                        </div>
-                        <div class="grid gap-2">
-                            <Label for="email">Email</Label>
-                            <Input id="email" type="email" v-model="form.email" placeholder="john@example.com"
-                                :class="{ 'border-red-500': errors.email }" />
-                            <p v-if="errors.email" class="text-red-500 text-sm mt-1">{{ errors.email }}</p>
-                        </div>
-                        <div class="grid gap-2" v-if="!isEditing">
-                            <Label for="password">Password</Label>
-                            <Input id="password" type="password" v-model="form.password"
-                                :class="{ 'border-red-500': errors.password }" />
-                            <p v-if="errors.password" class="text-red-500 text-sm mt-1">{{ errors.password }}</p>
-                        </div>
-                        <div class="grid gap-2">
-                            <Label for="national_id">National ID (Optional)</Label>
-                            <Input id="national_id" v-model="form.national_id" placeholder="12345678901234"
-                                :class="{ 'border-red-500': errors.national_id }" />
-                            <p v-if="errors.national_id" class="text-red-500 text-sm mt-1">{{ errors.national_id }}</p>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button type="button" variant="outline" @click="showReceptionistDialog = false">Cancel</Button>
-                        <Button type="submit" :disabled="isSubmitting">
-                            <Loader2 v-if="isSubmitting" class="mr-2 h-4 w-4 animate-spin" />
-                            {{ isEditing ? 'Update Manager' : 'Save Manager' }}
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
-
-        <Dialog v-model:open="showDeleteDialog">
-            <DialogContent class="sm:max-w-[425px]">
-                <DialogHeader>
-                    <DialogTitle>Delete Manager</DialogTitle>
-                    <DialogDescription>
-                        Are you sure you want to delete this manager? This action cannot be undone.
-                    </DialogDescription>
-                </DialogHeader>
-                <div class="py-4">
-                    <p><strong>Name:</strong> {{ receptionistToDelete?.name }}</p>
-                    <p><strong>Email:</strong> {{ receptionistToDelete?.email }}</p>
-                </div>
-                <DialogFooter>
-                    <Button type="button" variant="outline" @click="showDeleteDialog = false">Cancel</Button>
-                    <Button type="button" variant="destructive" :disabled="isSubmitting" @click="confirmDelete">
-                        <Loader2 v-if="isSubmitting" class="mr-2 h-4 w-4 animate-spin" />
-                        Delete Manager
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <!-- Dialogs and other components remain the same -->
     </AppLayout>
 </template>
 
 <script setup>
+import { Eye, Ban } from 'lucide-vue-next';
 import { ref } from 'vue';
-import { router } from '@inertiajs/vue3';
+import { router, usePage } from '@inertiajs/vue3'; // Import usePage
 import AppLayout from '@/layouts/AdminAppLayout.vue';
 import { Button } from '@/components/ui/button';
+import ConfirmationDialog from '@/components/receptionists_dialogs/ConfirmationDialog.vue';
+import ViewReceptionistDialog from '@/components/receptionists_dialogs/ViewReceptionistDialog.vue';
+import AddReceptionistDialog from '@/components/receptionists_dialogs/AddReceptionistDialog.vue'
+import EditReceptionistDialog from '@/components/receptionists_dialogs/EditReceptionistDialog.vue'
+
+
 import {
     Table,
     TableBody,
@@ -177,17 +127,24 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Pencil, Trash, Loader2, User as UserIcon } from 'lucide-vue-next';
 
+// Access the current URL
+const { url } = usePage();
+
 const props = defineProps({
     receptionists: Array,
+    managers:Array
 });
 
+
 const receptionists = ref(props.receptionists);
+
+console.log('Managers data:', props.managers)
+
+
 const showReceptionistDialog = ref(false);
-const showDeleteDialog = ref(false);
 const isSubmitting = ref(false);
 const errors = ref({});
 const isEditing = ref(false);
-const receptionistToDelete = ref(null);
 const editingReceptionistId = ref(null);
 const avatarInput = ref(null);
 const avatarPreview = ref(null);
@@ -241,52 +198,45 @@ const removeAvatar = () => {
     }
 };
 
-const openCreateDialog = () => {
-    resetForm();
-    showReceptionistDialog.value = true;
-};
 
-const openEditDialog = (manager) => {
-    resetForm();
-    isEditing.value = true;
-    editingReceptionistId.value = manager.id;
-    form.value = {
-        name: manager.name,
-        email: manager.email,
-        national_id: manager.national_id || '',
-        role: 'manager',
-        avatar: manager.avatar || null
-    };
-    showReceptionistDialog.value = true;
-};
 
-const deleteManager = (manager) => {
-    receptionistToDelete.value = manager;
-    showDeleteDialog.value = true;
+const managers = ref(props.managers) // Make it reactive
+const addReceptionistDialog = ref(null)
+
+const openAddDialog = () => {
+  addReceptionistDialog.value.open()
+}
+
+
+
+const confirmationDialog = ref(null);
+const receptionistToDelete = ref(null);
+
+const openDeleteDialog = (receptionist) => {
+    receptionistToDelete.value = receptionist;
+    confirmationDialog.value.open();
 };
 
 const confirmDelete = () => {
-    isSubmitting.value = true;
-
-    router.delete(`/admin/receptionists/${receptionistToDelete.value.id}`, {
-        preserveScroll: true,
-        onSuccess: (page) => {
-            showDeleteDialog.value = false;
-            receptionistToDelete.value = null;
-            if (page.props.receptionists) {
-                receptionists.value = page.props.receptionists;
+    if (receptionistToDelete.value) {
+        router.delete(`/admin/receptionists/${receptionistToDelete.value.id}`, {
+            preserveScroll: true,
+            onSuccess: () => {
+                // Remove the deleted receptionist from the list
+                receptionists.value = receptionists.value.filter(r => r.id !== receptionistToDelete.value.id);
+            },
+            onError: (error) => {
+                console.error('Error deleting receptionist:', error);
             }
-            else {
-                router.reload({ only: ['receptionists'] });
-            }
-        },
-        onFinish: () => {
-            isSubmitting.value = false;
-        }
-    });
+        });
+    }
 };
 
-const submitManager = () => {
+const cancelDelete = () => {
+    receptionistToDelete.value = null;
+};
+
+const submitReceptionist = () => {
     isSubmitting.value = true;
     errors.value = {};
 
@@ -351,6 +301,47 @@ const submitManager = () => {
         });
     }
 };
+
+
+
+const viewDialog = ref(null);
+const selectedReceptionist = ref({});
+
+const viewReceptionist = (receptionist) => {
+  selectedReceptionist.value = receptionist;
+  viewDialog.value.open();
+};
+
+
+
+const editDialog = ref(null)
+
+const openEditDialog = (receptionist) => {
+  editDialog.value.open(receptionist)
+}
+
+
+/* Ban */
+
+const toggleBanStatus = (receptionist) => {
+    const action = receptionist.is_banned ? 'unban' : 'ban';
+    router.post(`/admin/receptionists/${receptionist.id}/${action}`, {}, {
+        preserveScroll: true,
+        onSuccess: (page) => {
+            receptionists.value = receptionists.value.map(r => {
+                if (r.id === receptionist.id) {
+                    return { ...r, is_banned: !r.is_banned };
+                }
+                return r;
+            });
+        },
+        onError: (error) => {
+            console.error('Error toggling ban status:', error);
+        }
+    });
+};
+
+
 </script>
 
 <style></style>

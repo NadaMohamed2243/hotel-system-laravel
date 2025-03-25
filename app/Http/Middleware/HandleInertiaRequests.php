@@ -79,6 +79,8 @@ class HandleInertiaRequests extends Middleware
             'view_rooms' => 'view rooms',
             'manage_rooms' => 'manage rooms',
             'view_reports' => 'view reports',
+            'view_floors' => 'view floors',
+            'manage_floors' => 'manage floors'
         ];
         
         foreach ($permissionChecks as $key => $permission) {

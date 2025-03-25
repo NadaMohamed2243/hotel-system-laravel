@@ -74,14 +74,14 @@ class User extends Authenticatable
 
     protected static function booted()
     {
-        static::created(function ($user) {
-            if ($user->role === 'receptionist') {
-                Receptionist::create([
-                    'user_id' => $user->id,
-                    'manager_id' => auth()->user()?->id ?? 1, // Default to manager ID 1 if no authenticated user
-                    'is_banned' => false,
-                ]);
-            }
-        });
+        // static::created(function ($user) {
+        //     if ($user->role === 'receptionist') {
+        //         Receptionist::create([
+        //             'user_id' => $user->id,
+        //             'manager_id' => auth()->user()?->id ?? 1, // Default to manager ID 1 if no authenticated user
+        //             'is_banned' => false,
+        //         ]);
+        //     }
+        // });
     }
 }
