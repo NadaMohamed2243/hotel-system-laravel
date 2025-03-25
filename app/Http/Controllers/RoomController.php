@@ -13,6 +13,7 @@ class RoomController extends Controller
 {
     public function index()
     {
+        $user = auth()->user();
         $this->reset_custom_id();
         //retrieving data
         $rooms = Room::with('manager')->get()
@@ -75,7 +76,7 @@ class RoomController extends Controller
 
     public function destroy($id){
         $room = Room::find($id);
-        if ($room && $room->is_reserved == 0){ 
+        if ($room && $room->is_reserved == 0){
             $room->delete();
             $this->reset_custom_id();
             return redirect()->route('rooms.index');
