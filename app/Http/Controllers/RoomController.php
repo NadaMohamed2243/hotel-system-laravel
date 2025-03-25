@@ -13,19 +13,6 @@ class RoomController extends Controller
 {
     public function index()
     {
-        // Check permission manually rather than in middleware to avoid errors
-        $user=auth()->user();
-        try {
-            if (!$user->hasPermissionTo('manage rooms')) {
-                return abort(403, 'You do not have permission to view rooms.');
-            }
-        } catch (\Exception $e) {
-            Log::warning('Permission check failed: ' . $e->getMessage());
-            // Fallback to role check if permission check fails - only admin can see managers
-            if ($user->role !== 'admin' || $user->role !== 'manager') {
-                return abort(403, 'Unauthorized action.');
-            }
-        }
         $this->reset_custom_id();
         //retrieving data
         $rooms = Room::with('manager')->get()
@@ -60,20 +47,6 @@ class RoomController extends Controller
         'price' => ['required', 'numeric'],
     ]);
 
-    // Check permission manually rather than in middleware to avoid errors
-    $user = auth()->user();
-
-    try {
-        if (!$user->hasPermissionTo('manage rooms')) {
-            return abort(403, 'You do not have permission to manage rooms.');
-        }
-    } catch (\Exception $e) {
-        Log::warning('Permission check failed: ' . $e->getMessage());
-        // Fallback to role check if permission check fails - only admin or manager can create rooms
-        if (!in_array($user->role, ['admin', 'manager'])) {
-            return abort(403, 'Unauthorized action.');
-        }
-    }
     //Convert price to cent
     $validatedData['price'] = (int) ($validatedData['price'] * 100);
     // Automatically assign manager_id if user is a manager
@@ -82,7 +55,6 @@ class RoomController extends Controller
 
     // Store the room
     Room::create($validatedData);
-
     return redirect()->route('rooms.index');
     }
 
@@ -103,18 +75,29 @@ class RoomController extends Controller
 
     public function destroy($id){
         $room = Room::find($id);
-        if ($room) {
+        if ($room && $room->is_reserved == 0){ 
             $room->delete();
             $this->reset_custom_id();
             return redirect()->route('rooms.index');
         }
-        return redirect()->route('rooms.index');
+        else{
+            return redirect()->route('rooms.index')->with('error', 'Room is reserved.');
+        }
     }
-
+    //to update the order of showing id
     public function reset_custom_id(){
         Room::orderBy('id')->get()->each(function ($room, $index) {
             $room->custom_id = $index + 1;
             $room->save();
         });
+    }
+    //to update is_reserved column
+    public function reserve(Request $request, Room $room)
+    {
+        $request->validate([
+            'is_reserved' => ['required', 'boolean'],
+        ]);
+        $room->update(['is_reserved' => $request->is_reserved]);
+        return back();
     }
 }

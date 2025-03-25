@@ -12,7 +12,8 @@ class Room extends Model
                             'capacity',
                             'price',
                             // 'floor_id',
-                            'manager_id'];
+                            'manager_id',
+                            'is_reserved'];
 
     // public function floor()
     // {
