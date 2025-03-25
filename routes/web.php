@@ -6,12 +6,9 @@ use Inertia\Inertia;
 use App\Http\Controllers\ManagerController;
 use App\Http\Controllers\RoomController;
 
-<<<<<<< HEAD
 use App\Http\Controllers\ReceptionistController;
 use App\Http\Controllers\FloorController;
 
-=======
->>>>>>> a8bf2123f45816642303a0ad1f5fd7efa7669913
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
