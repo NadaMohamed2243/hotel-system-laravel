@@ -8,12 +8,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class Room extends Model
 {
-    protected $fillable = ['number',
-                            'capacity',
-                            'price',
-                            // 'floor_id',
-                            'manager_id',
-                            'is_reserved'];
+    protected $fillable = [
+        'number',
+        'capacity',
+        'price',
+        // 'floor_id',
+        'manager_id',
+        'is_reserved'
+    ];
 
     // public function floor()
     // {
@@ -30,4 +32,8 @@ class Room extends Model
         return number_format($this->price / 100, 2);
     }
 
+    public function reservations()
+    {
+        return $this->hasMany(Reservation::class);
+    }
 }

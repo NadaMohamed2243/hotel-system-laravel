@@ -4,6 +4,10 @@ import AppLayout from '@/layouts/AdminAppLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { type BreadcrumbItem } from '@/types';
 
+const props = defineProps<{
+    reservations: any; // Adjust type based on your actual data structure
+}>();
+
 const breadcrumbs: BreadcrumbItem[] = [
     {
         title: 'Receptionist Dashboard',
@@ -17,7 +21,7 @@ const breadcrumbs: BreadcrumbItem[] = [
         <Head title="Receptionist Dashboard" />
         <AppLayout :breadcrumbs="breadcrumbs">
             <div class="flex h-full flex-1 flex-col gap-4 rounded-xl p-4">
-                client reservations
+                client reservations  {{ props.reservations }}
             </div>
         </AppLayout>
     </div>
