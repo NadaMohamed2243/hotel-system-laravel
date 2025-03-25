@@ -13,7 +13,15 @@ import AppLogo from '../AppLogo.vue';
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const can = computed(() => page.props.auth.can || {});
-
+let role='';
+// console.log(user.value.role);
+if(user.value.role==='manager'){
+    role="/manager";
+}
+else if(user.value.role==='admin'){
+    role="/admin";
+}
+// console.log(`${role}/floors`);
 // Core navigation items everyone can see
 const dashboardItem = {
     title: 'Dashboard',
@@ -41,9 +49,15 @@ const mainNavItems = computed(() => {
             href: '/admin/receptionists',
             icon: Users,
         });
+
     }
 
     if (can.value.view_clients || can.value.manage_clients) {
+        items.push({
+            title: 'Manage Clients',
+            href: `${role}/clients`,
+            icon: Users,
+        });
         items.push({
             title: 'Manage Pending Clients',
             href: '/dashboard/receptionist/clients/pending',
@@ -73,7 +87,7 @@ const mainNavItems = computed(() => {
     if (can.value.view_rooms || can.value.manage_rooms) {
         items.push({
             title: 'Manage Rooms',
-            href: '/admin/rooms',
+            href: `${role}/rooms`,
             icon: Home,
         });
     }
