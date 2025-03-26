@@ -14,6 +14,7 @@ const props = defineProps({
     rooms: Array,
     managers: Array,
     role: String,
+    floors:Array,
 });
 
 const rooms = ref(props.rooms);
@@ -39,10 +40,11 @@ const form = ref({
     capacity: '',
     price: '',
     manager_id: props.role === 'admin' ? null : props.managers[0]?.id || null,
+    floor_id: null,
 });
 
 const resetForm = () => {
-    form.value = { number: '', capacity: '', price: '', manager_id: null };
+    form.value = { number: '', capacity: '', price: '', manager_id: null,floor_id: null };
     isEditing.value = false;
     errors.value = {}; // Clear errors when resetting
     editingRoomId.value = null;
@@ -120,7 +122,7 @@ const submitRoom = () => {
                         <TableHeader>
                             <TableRow>
                                 <TableHead class="w-16">ID</TableHead>
-                                <!-- <TableHead class="w-16">C_ID</TableHead> -->
+                                <TableHead >Floor Name</TableHead>
                                 <TableHead>Number</TableHead>
                                 <TableHead>Capacity</TableHead>
                                 <TableHead>Price</TableHead>
@@ -130,11 +132,11 @@ const submitRoom = () => {
                         </TableHeader>
                         <TableBody>
                             <TableRow v-for="room in rooms" :key="room.id">
-                                <!-- <TableCell class="font-medium">{{ room.id }}</TableCell> -->
                                 <TableCell class="font-medium">{{ room.custom_id }}</TableCell>
+                                <TableCell class="font-medium">{{ room.floor }}</TableCell>
                                 <TableCell>{{ room.number }}</TableCell>
                                 <TableCell>{{ room.capacity }}</TableCell>
-                                <TableCell>{{ room.price }}</TableCell>
+                                <TableCell>{{ room.price }}$</TableCell>
                                 <TableCell v-if="role==='admin'">{{ room.manager }}</TableCell>
                                 <TableCell class="text-center"  v-if="room.canEdit">
                                     <div class="flex justify-center gap-2">
@@ -173,39 +175,48 @@ const submitRoom = () => {
                     </DialogDescription>
                 </DialogHeader>
                 <form @submit.prevent="submitRoom">
-    <div class="grid gap-4 py-4">
-        <div class="grid gap-2">
-            <Label for="number">Room Number</Label>
-            <Input id="number" v-model="form.number" :disabled="isEditing" placeholder="1212"
-                :class="{ 'border-red-500': errors.number }"/>
-            <p v-if="errors.number" class="text-red-500 text-sm">{{ errors.number }}</p>
-        </div>
+                <div class="grid gap-4 py-4">
+                    <div class="grid gap-2" v-if="isEditing">
+                        <Label for="number">Room Number</Label>
+                        <Input id="number" :value="form.number" disabled
+                        :class="['text-white',{ 'border-red-500': errors.number}]"/>
+                        <p v-if="errors.number" class="text-red-500 text-sm">{{ errors.number }}</p>
+                    </div>
+                    <div class="grid gap-2">
+                        <Label for="floor" class="text-white">Select Floor</Label>
+                        <select id="floor" v-model="form.floor_id"
+                            class="w-full bg-black text-white border border-gray-600 rounded-lg p-2 focus:ring-2 focus:ring-gray-400 focus:outline-none">
+                            <option v-for="floor in props.floors" :key="floor.id" :value="floor.id">
+                                {{ floor.name }}
+                            </option>
+                        </select>
+                    </div>
 
-        <div class="grid gap-2">
-            <Label for="capacity">Capacity</Label>
-            <Input id="capacity" type="number" v-model="form.capacity" placeholder="2"
-                :class="{ 'border-red-500': errors.capacity }"/>
-            <p v-if="errors.capacity" class="text-red-500 text-sm">{{ errors.capacity }}</p>
-        </div>
+                <div class="grid gap-2">
+                    <Label for="capacity">Capacity</Label>
+                    <Input id="capacity" type="number" v-model="form.capacity" placeholder="2"
+                        :class="{ 'border-red-500': errors.capacity }"/>
+                    <p v-if="errors.capacity" class="text-red-500 text-sm">{{ errors.capacity }}</p>
+                </div>
 
-        <div class="grid gap-2">
-            <Label for="price">Price</Label>
-            <Input id="price" type="number" v-model="form.price" placeholder="100"
-                :class="{ 'border-red-500': errors.price }"/>
-            <p v-if="errors.price" class="text-red-500 text-sm">{{ errors.price }}</p>
-        </div>
+                <div class="grid gap-2">
+                    <Label for="price">Price</Label>
+                    <Input id="price" type="number" v-model="form.price" placeholder="100"
+                        :class="{ 'border-red-500': errors.price }"/>
+                    <p v-if="errors.price" class="text-red-500 text-sm">{{ errors.price }}</p>
+                </div>
 
-        <div class="grid gap-2">
-            <select id="manager" v-model="form.manager_id"
-                class="w-full bg-black text-white border border-gray-600 rounded-lg p-2 focus:ring-2 focus:ring-gray-400 focus:outline-none"
-                disabled
-                hidden>
-                <option v-if="role === 'admin'" :value="null">Admin</option>
-                <option v-else :value="props.managers[0]?.id" >{{ props.managers[0]?.name }}</option>
-            </select>
-            <p v-if="errors.manager_id" class="text-red-500 text-sm">{{ errors.manager_id }}</p>
-        </div>
-    </div>
+                <div class="grid gap-2">
+                    <select id="manager" v-model="form.manager_id"
+                        class="w-full bg-black text-white border border-gray-600 rounded-lg p-2 focus:ring-2 focus:ring-gray-400 focus:outline-none"
+                        disabled
+                        hidden>
+                        <option v-if="role === 'admin'" :value="null">Admin</option>
+                        <option v-else :value="props.managers[0]?.id" >{{ props.managers[0]?.name }}</option>
+                    </select>
+                    <p v-if="errors.manager_id" class="text-red-500 text-sm">{{ errors.manager_id }}</p>
+                </div>
+            </div>
 
     <DialogFooter>
         <Button type="button" variant="outline" @click="showRoomDialog = false">Cancel</Button>
@@ -229,6 +240,7 @@ const submitRoom = () => {
                 </DialogHeader>
                 <div class="py-4">
                     <p><strong>Room Number:</strong> {{ roomToDelete?.number }}</p>
+                    <p><strong>Floor Name:</strong> {{ roomToDelete?.floor }}</p>
                     <p><strong>Capacity:</strong> {{ roomToDelete?.capacity }}</p>
                 </div>
                 <DialogFooter>
@@ -250,6 +262,7 @@ const submitRoom = () => {
                 </DialogHeader>
                 <div class="py-4">
                     <p><strong>Room Number:</strong> {{ selectedRoom?.number }}</p>
+                    <p><strong>Floor Name:</strong> {{ selectedRoom?.floor }} </p>
                     <p><strong>Capacity:</strong> {{ selectedRoom?.capacity }}</p>
                     <p><strong>Price:</strong> {{ selectedRoom?.price }} $</p>
                     <p v-if="role==='admin'"><strong>Manager Name:</strong> {{ selectedRoom?.manager }}</p>

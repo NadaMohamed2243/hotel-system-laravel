@@ -189,7 +189,10 @@ class ReceptionistController extends Controller
             'is_banned' => $validated['is_banned']
         ]);
 
-        return redirect()->back()->with('success', 'Receptionist updated successfully');
+        $receptionist->avatar_image = asset('storage/' . $receptionist->user->avatar_image);
+
+        return redirect()->back()->with('success', 'Receptionist updated successfully')
+        ->with('updatedReceptionist', $receptionist);
     }
 
     public function destroy(Receptionist $receptionist)
