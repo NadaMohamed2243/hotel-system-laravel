@@ -18,7 +18,8 @@ class ManagerController extends Controller
      */
     public function index()
     {
-        $managers = User::where('role', 'manager')->get();
+        $managers = User::where('role', 'manager')
+        ->paginate(10);
         
         // Transform managers to include full avatar URL
         $managers->transform(function($manager) {
@@ -58,12 +59,14 @@ class ManagerController extends Controller
 
         $managers = $this->getFormattedManagers();
 
-        return redirect()->route('managers.index')
+        $page = $request->input('page', 1);
+
+        return redirect()->route('managers.index', ['page' => $page])
             ->with('success', 'Manager created successfully')
             ->with('managers', $managers);
     }
 
-    public function destroy(User $user)
+    public function destroy(User $user, Request $request)
     {
         // Delete old avatar if exists
         if ($user->avatar_image) {
@@ -76,9 +79,11 @@ class ManagerController extends Controller
 
         $managers = $this->getFormattedManagers();
 
-        return redirect()->route('managers.index')
-            ->with('success', 'Manager deleted successfully');
-            //->with('managers', $managers);
+        $page = $request->input('page', 1);
+
+        return redirect()->route('managers.index', ['page' => $page])
+            ->with('success', 'Manager deleted successfully')
+            ->with('managers', $managers);
     }
 
     // public function edit(User $user)
@@ -127,14 +132,17 @@ class ManagerController extends Controller
 
         $managers = $this->getFormattedManagers();
 
-        return redirect()->route('managers.index')
+        $page = $request->input('page', 1);
+
+        return redirect()->route('managers.index', ['page' => $page])
             ->with('success', 'Manager updated successfully')
             ->with('managers', $managers);
     }
 
     private function getFormattedManagers()
     {
-        $managers = User::where('role', 'manager')->get();
+        $managers = User::where('role', 'manager')
+        ->paginate(10);
         
         $managers->transform(function($manager) {
             if ($manager->avatar_image) {
