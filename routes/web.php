@@ -80,7 +80,7 @@ require __DIR__.'/auth.php';
 
 // Managage Receptionists
 
-Route::prefix('admin')->middleware(['auth', 'verified'])->group(function () {
+Route::prefix('admin')->middleware(['auth', 'verified','permission:manage receptionists'])->group(function () {
     // Admin receptionist management
     Route::prefix('receptionists')->group(function () {
         Route::get('/', [ReceptionistController::class, 'index'])->name('admin.receptionists.index');
@@ -119,7 +119,9 @@ Route::prefix('manager')->middleware(['auth'])->group(function () {
 
 
     // Receptionist Management
-    Route::prefix('receptionists')->group(function () {
+    Route::prefix('receptionists')
+    ->middleware(['auth', 'verified', 'role:manager','permission:manage receptionists'])
+    ->group(function () {
         Route::get('/', [ReceptionistController::class, 'index'])->name('manager.receptionists.index');
         Route::get('/create', [ReceptionistController::class, 'create'])->name('manager.receptionists.create');
         Route::post('/', [ReceptionistController::class, 'store'])->name('manager.receptionists.store');
