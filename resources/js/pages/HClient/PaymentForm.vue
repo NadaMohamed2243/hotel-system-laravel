@@ -1,122 +1,174 @@
 <template>
-    <div class="payment-container">
-      <h1 class="text-center text-2xl font-bold mb-4">Payment Form</h1>
-  
-      <p v-if="paymentError" class="text-red-500 text-center mb-4">{{ paymentError }}</p>
-  
-      <div v-if="clientSecret">
-        <div class="bg-white p-6 rounded-lg shadow-md">
-          <label for="card-element" class="block text-sm font-medium text-gray-700 mb-2">Card details</label>
-          <div id="card-element" class="w-full p-4 border rounded-md bg-gray-50"></div>
-  
-          <button 
-            @click="handlePayment"
-            :disabled="isProcessing"
-            class="bg-blue-500 text-white py-2 px-4 rounded mt-4 w-full"
-          >
-            Pay Now
-          </button>
-        </div>
-      </div>
+  <div class="payment-container">
+    <h1 class="text-center text-2xl font-bold mb-4">Payment Form</h1>
+
+    <div v-if="paymentError" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+      role="alert">
+      <span class="block sm:inline">{{ paymentError }}</span>
     </div>
-  </template>
-  
-  <script setup>
-  import { ref, onMounted, nextTick } from 'vue';
-  import { loadStripe } from '@stripe/stripe-js';
-  
-  const props = defineProps({
-    clientSecret: String,
-  });
-  
-  const paymentError = ref('');
-  const isProcessing = ref(false);
-  
-  const stripePromise = loadStripe('your-public-key-here');  //
-  
-  onMounted(() => {
-    if (!window.Stripe) {
-      const script = document.createElement('script');
-      script.src = "https://js.stripe.com/v3/";
-      script.onload = () => {
-        console.log("Stripe.js has been loaded");
-        setTimeout(() => {
-          nextTick(() => {
-            initializeStripeElements();  
-          });
-        }, 100);  //to make sure the script is fully loaded
-      };
-      document.head.appendChild(script);
-    } else {
-      console.log("Stripe.js is already loaded");
-      nextTick(initializeStripeElements);
-    }
-  });
-  
-  const initializeStripeElements = async () => {
-    console.log('Initializing Stripe...');
-  
-    const stripe = await stripePromise;
+
+    <div v-if="!clientSecret"
+      class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded relative mb-4">
+      Loading payment form...
+    </div>
+
+    <div v-else class="bg-white p-6 rounded-lg shadow-md">
+      <div class="mb-4">
+        <label for="card-element" class="block text-sm font-medium text-gray-700 mb-2">
+          Credit or debit card
+        </label>
+        <div ref="cardElement" id="card-element" class="w-full p-4 border rounded-md bg-gray-50 min-h-[40px]">
+          <!-- Stripe Element will be inserted here -->
+        </div>
+        <div id="card-errors" role="alert" class="text-red-500 text-sm mt-2"></div>
+      </div>
+
+      <button @click="handlePayment" :disabled="isProcessing || !isCardComplete"
+        class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded disabled:opacity-50">
+        <span v-if="isProcessing">
+          Processing...
+        </span>
+        <span v-else>
+          Pay {{ formatPrice(amount) }}
+        </span>
+      </button>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
+import { loadStripe } from '@stripe/stripe-js';
+import { router } from '@inertiajs/vue3';
+
+const props = defineProps({
+  clientSecret: {
+    type: String,
+    required: true
+  },
+  roomId: {
+    type: Number,
+    required: true
+  },
+  amount: {
+    type: Number,
+    required: true
+  }
+});
+
+const cardElement = ref(null);
+const paymentError = ref('');
+const isProcessing = ref(false);
+const isCardComplete = ref(false);
+let stripe = null;
+let card = null;
+
+const formatPrice = (amount) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD'
+  }).format(amount);
+};
+
+// Use environment variable for Stripe public key
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+
+const mountCardElement = async () => {
+  try {
+    stripe = await stripePromise;
     if (!stripe) {
-      console.log('Stripe failed to load');
-      paymentError.value = 'Stripe failed to load.';
-      return;
+      throw new Error('Failed to load Stripe');
     }
-  
+
     const elements = stripe.elements();
-    const card = elements.create('card');
-    console.log('Stripe Elements created');
-  
-    nextTick(() => {
-      const cardElement = document.getElementById('card-element');
-      if (cardElement) {
-        card.mount(cardElement);
-        console.log('Card mounted successfully');
-      } else {
-        console.log('Card element not found in the DOM');
-        paymentError.value = 'Card element not found in the DOM';
+    card = elements.create('card', {
+      style: {
+        base: {
+          fontSize: '16px',
+          color: '#32325d',
+          fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+          fontSmoothing: 'antialiased',
+          '::placeholder': {
+            color: '#aab7c4'
+          }
+        },
+        invalid: {
+          color: '#fa755a',
+          iconColor: '#fa755a'
+        }
       }
     });
-  };
-  
-  const handlePayment = async () => {
-    if (!props.clientSecret) {
-      paymentError.value = 'Client Secret is missing';
-      return;
-    }
-  
-    isProcessing.value = true;
-  
-    try {
-      const stripe = await stripePromise;
-      const elements = stripe.elements();
-      const card = elements.getElement('card');
-  
-      const { error, paymentIntent } = await stripe.confirmCardPayment(props.clientSecret, {
-        payment_method: {
-          card: card,
-        },
-      });
-  
-      if (error) {
-        paymentError.value = error.message;
-        isProcessing.value = false;
-      } else if (paymentIntent.status === 'succeeded') {
-        console.log('Payment successful');
-        window.location.href = '/payment-success';
+
+    // Mount the card element
+    card.mount('#card-element');
+
+    // Handle real-time validation errors
+    card.on('change', (event) => {
+      const displayError = document.getElementById('card-errors');
+      if (displayError) {
+        if (event.error) {
+          displayError.textContent = event.error.message;
+          isCardComplete.value = false;
+        } else {
+          displayError.textContent = '';
+          isCardComplete.value = event.complete;
+        }
       }
-    } catch (error) {
-      paymentError.value = 'Payment failed: ' + error.message;
-      isProcessing.value = false;
-    }
-  };
-  </script>
-  
-  <style scoped>
-  .payment-container {
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
+    });
+
+  } catch (error) {
+    console.error('Stripe setup error:', error);
+    paymentError.value = 'Failed to initialize payment form: ' + error.message;
   }
-  </style>
-  
+};
+
+onMounted(() => {
+  // Small delay to ensure DOM is ready
+  setTimeout(mountCardElement, 100);
+});
+
+onUnmounted(() => {
+  if (card) {
+    card.destroy();
+  }
+});
+
+const handlePayment = async () => {
+  if (!stripe || !card) {
+    paymentError.value = 'Payment system is not initialized';
+    return;
+  }
+
+  isProcessing.value = true;
+  paymentError.value = '';
+
+  try {
+    const { error, paymentIntent } = await stripe.confirmCardPayment(props.clientSecret, {
+      payment_method: {
+        card: card,
+      }
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    if (paymentIntent.status === 'succeeded') {
+      router.visit(`/client/payment-success/${props.roomId}`);
+    }
+  } catch (error) {
+    console.error('Payment error:', error);
+    paymentError.value = error.message || 'Payment failed. Please try again.';
+  } finally {
+    isProcessing.value = false;
+  }
+};
+</script>
+
+<style scoped>
+.payment-container {
+  max-width: 600px;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+</style>
