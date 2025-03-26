@@ -73,29 +73,6 @@ const emit = defineEmits(['pagination-change']);
 
 <template>
     <div class="w-90 m-4">
-        <!-- Filter Input -->
-        <div class="flex items-center py-4">
-            <Input class="max-w-sm" placeholder="Filter emails..."
-                :model-value="table.getColumn('email')?.getFilterValue() as string"
-                @update:model-value="table.getColumn('email')?.setFilterValue($event)" />
-            <DropdownMenu>
-                <DropdownMenuTrigger as-child>
-                    <Button variant="outline" class="ml-auto">
-                        Columns
-                        <ChevronDown class="ml-2 h-4 w-4" />
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuCheckboxItem
-                        v-for="column in table.getAllColumns().filter((column) => column.getCanHide())" :key="column.id"
-                        class="capitalize" :model-value="column.getIsVisible()"
-                        @update:model-value="(value) => column.toggleVisibility(!!value)">
-                        {{ column.id }}
-                    </DropdownMenuCheckboxItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-        </div>
-
         <!-- Table -->
         <div class="rounded-md border">
             <Table>
@@ -132,16 +109,27 @@ const emit = defineEmits(['pagination-change']);
             </Table>
         </div>
 
-        <!-- Pagination Controls -->
-        <div class="flex items-center justify-end space-x-2 py-4">
-            <div class="space-x-2">
-                <Button variant="outline" size="sm" :disabled="!table.getCanPreviousPage()"
-                    @click="table.previousPage()">
-                    Previous
-                </Button>
-                <Button variant="outline" size="sm" :disabled="!table.getCanNextPage()" @click="table.nextPage()">
-                    Next
-                </Button>
+
+        <!-- Enhanced Pagination Controls -->
+        <div class="flex items-center justify-between py-4">
+            <!-- Page Info -->
+            <div class="text-sm text-muted-foreground mx-2">
+                Page {{ table.getState().pagination.pageIndex + 1 }} of {{ table.getPageCount() }}
+                <span class="mx-2">•</span>
+                Total {{ props.pagination?.total || props.data.length }} items
+            </div>
+
+            <!-- Pagination Controls -->
+            <div class="flex items-center justify-end space-x-2 py-4">
+                <div class="space-x-2">
+                    <Button variant="outline" size="sm" :disabled="!table.getCanPreviousPage()"
+                        @click="table.previousPage()">
+                        Previous
+                    </Button>
+                    <Button variant="outline" size="sm" :disabled="!table.getCanNextPage()" @click="table.nextPage()">
+                        Next
+                    </Button>
+                </div>
             </div>
         </div>
     </div>

@@ -17,6 +17,7 @@
                 ref="editDialog"
                 :managers="managers"
                 :is-manager-view="isManagerView"
+                @receptionist-updated="handleReceptionistUpdated"
             />
 
             <!-- Confirmation Dialog -->
@@ -48,6 +49,8 @@
                             <TableRow>
                                 <TableHead>Name</TableHead>
                                 <TableHead>Email</TableHead>
+                                <TableHead>AVATAR</TableHead>
+
                                 <TableHead>Created_at</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead v-if="!isManagerView">Manager</TableHead>
@@ -58,6 +61,17 @@
                             <TableRow v-for="receptionist in receptionists" :key="receptionist.id">
                                 <TableCell>{{ receptionist.name }}</TableCell>
                                 <TableCell>{{ receptionist.email }}</TableCell>
+                                <TableCell>
+                                    <img v-if="receptionist.avatar_image" :src="receptionist.avatar_image" alt="Avatar"
+                                        class="h-10 w-10 rounded-full object-cover" />
+                                    <div v-else
+                                        class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                        <UserIcon class="h-6 w-6 text-gray-500" />
+                                    </div>
+                                </TableCell>
+
+
+
                                 <TableCell>{{ formatDate(receptionist.created_at) }}</TableCell>
                                 <TableCell>
                                     <span :class="[
@@ -72,6 +86,7 @@
                                 </TableCell>
                                 <TableCell class="text-center">
                                     <div class="flex justify-center gap-2">
+
                                         <Button variant="outline" size="sm" @click="viewReceptionist(receptionist)">
                                             <Eye class="h-4 w-4 mr-1" />
                                             View
@@ -80,25 +95,27 @@
                                             variant="outline"
                                             size="sm"
                                             @click="openEditDialog(receptionist)"
-                                            :disabled="isManagerView && !canEditReceptionist(receptionist)"
+                                            :disabled="!canEditReceptionist(receptionist)"
                                         >
                                             <Pencil class="h-4 w-4 mr-1" />
                                             Edit
                                         </Button>
+
                                         <Button
                                             :variant="receptionist.is_banned ? 'default' : 'destructive'"
                                             size="sm"
                                             @click="toggleBanStatus(receptionist)"
-                                            :disabled="isManagerView && !canBanReceptionist(receptionist)"
+                                            :disabled="!canBanReceptionist(receptionist)"
                                         >
                                             <Ban class="h-4 w-4 mr-1" />
                                             {{ receptionist.is_banned ? 'Unban' : 'Ban' }}
                                         </Button>
+
                                         <Button
                                             variant="destructive"
                                             size="sm"
                                             @click="openDeleteDialog(receptionist)"
-                                            :disabled="isManagerView"
+                                            :disabled="!canDeleteReceptionist(receptionist)"
                                         >
                                             <Trash class="h-4 w-4 mr-1" />
                                             Delete
@@ -151,17 +168,38 @@ const isManagerView = computed(() => {
          url.value.startsWith('/manager/receptionists')
 });
 
-// Check permissions (you'll need to implement these based on your auth system)
+// Get current manager ID from page props
+const currentManagerId = computed(() => pageProps.value.currentManagerId);
+
+// Check if current user is a manager
+const isManager = computed(() => {
+  return pageProps.value.auth?.user?.role === 'manager';
+});
+
+// Check if receptionist belongs to current manager
+const isOwnReceptionist = (receptionist) => {
+  return receptionist.manager_id === currentManagerId.value;
+};
+
+// Permission checks
 const canAddReceptionist = computed(() => {
-    return true; // Replace with actual permission check
+  return !isManagerView.value || isManager.value;
 });
 
 const canEditReceptionist = (receptionist) => {
-    return true; // Replace with actual permission check
+  return !isManager.value || isOwnReceptionist(receptionist);
 };
 
 const canBanReceptionist = (receptionist) => {
-    return true; // Replace with actual permission check
+  return !isManager.value || isOwnReceptionist(receptionist);
+};
+
+const canDeleteReceptionist = (receptionist) => {
+  // Admin can always delete
+  if (!isManager.value) return true;
+
+  // Manager can only delete their own receptionists
+  return isOwnReceptionist(receptionist);
 };
 
 // Date formatting
@@ -189,8 +227,18 @@ const viewReceptionist = (receptionist) => {
 };
 
 const openEditDialog = (receptionist) => {
-    editDialog.value.open(receptionist);
-};
+  editDialog.value.open({
+    ...receptionist,
+    user: {
+      name: receptionist.name,
+      email: receptionist.email,
+      national_id: receptionist.national_id,
+      avatar_image: receptionist.avatar_image
+    },
+    manager_id: receptionist.manager_id,
+    is_banned: Boolean(receptionist.is_banned)
+  });
+}
 
 const openDeleteDialog = (receptionist) => {
     receptionistToDelete.value = receptionist;
@@ -198,18 +246,33 @@ const openDeleteDialog = (receptionist) => {
 };
 
 const confirmDelete = () => {
-    if (receptionistToDelete.value) {
-        router.delete(`/admin/receptionists/${receptionistToDelete.value.id}`, {
-            preserveScroll: true,
-            onSuccess: () => {
-                receptionists.value = receptionists.value.filter(r => r.id !== receptionistToDelete.value.id);
-            },
-            onError: (error) => {
-                console.error('Error deleting receptionist:', error);
-            }
-        });
+  if (receptionistToDelete.value) {
+    // Check if it's a temporary receptionist
+    if (receptionistToDelete.value.id.toString().startsWith('temp-')) {
+      // Just remove from local state without API call
+      receptionists.value = receptionists.value.filter(
+        r => r.id !== receptionistToDelete.value.id
+      );
+      receptionistToDelete.value = null;
+      return;
     }
+
+    // Regular deletion for non-temporary receptionists
+    router.delete(`/admin/receptionists/${receptionistToDelete.value.id}`, {
+      preserveScroll: true,
+      onSuccess: () => {
+        receptionists.value = receptionists.value.filter(
+          r => r.id !== receptionistToDelete.value.id
+        );
+        receptionistToDelete.value = null;
+      },
+      onError: (error) => {
+        console.error('Error deleting receptionist:', error);
+      }
+    });
+  }
 };
+
 
 const cancelDelete = () => {
     receptionistToDelete.value = null;
@@ -237,12 +300,24 @@ const toggleBanStatus = (receptionist) => {
 
 const handleReceptionistAdded = (receptionist) => {
   if (receptionist.is_temp) {
-    // Add temporary receptionist
-    receptionists.value = [...receptionists.value, receptionist];
+    // Add temporary receptionist with proper manager data
+    const manager = props.managers.find(m => m.id === receptionist.manager_id) ||
+                   { name: 'You', email: page.props.auth.user.email };
+
+    receptionists.value = [...receptionists.value, {
+      ...receptionist,
+      manager_name: manager.name,
+      manager_email: manager.email,
+      manager_id: receptionist.manager_id
+    }];
   } else {
     // Replace temporary receptionist with real one
     receptionists.value = receptionists.value.map(r =>
-      r.is_temp && r.email === receptionist.email ? receptionist : r
+      r.is_temp && r.email === receptionist.email ? {
+        ...receptionist,
+        manager_name: receptionist.manager?.name || 'You',
+        manager_email: receptionist.manager?.email || page.props.auth.user.email
+      } : r
     );
   }
 };
@@ -251,5 +326,11 @@ const handleReceptionistRemoved = (tempId) => {
   // Remove temporary receptionist on error
   receptionists.value = receptionists.value.filter(r => r.id !== tempId);
 };
+
+const handleReceptionistUpdated = (updatedReceptionist) => {
+  receptionists.value = receptionists.value.map(r =>
+    r.id === updatedReceptionist.id ? updatedReceptionist : r
+  )
+}
 
 </script>
