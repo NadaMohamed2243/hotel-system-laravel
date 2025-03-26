@@ -2,8 +2,12 @@
     <AppLayout>
         <div class="flex flex-col gap-4 p-8">
             <!-- Add Dialog -->
-            <AddFloorDialog ref="addFloorDialog" :managers="managers" />
-
+            <AddFloorDialog 
+      ref="addFloorDialog" 
+      :managers="managers" 
+      @created="handleFloorCreated"
+      @success="handleSuccess"
+    />
             <!-- View Dialog -->
             <ViewFloorDialog ref="viewDialog" :floor="selectedFloor" />
 
@@ -21,7 +25,7 @@
 
             <div class="flex justify-between items-center mb-6">
                 <h1 class="text-2xl font-bold">Floors</h1>
-                <Button @click="openAddDialog">
+                <Button @click="openAddDialog" v-if="canCreate">
                     Add Floor
                 </Button>
             </div>
@@ -34,7 +38,7 @@
                                 <TableHead>Name</TableHead>
                                 <TableHead>Number</TableHead>
                                 <TableHead>Created At</TableHead>
-                                <TableHead v-if="url.startsWith('/admin/floors')">Manager</TableHead>
+                                <TableHead>Manager</TableHead>
                                 <TableHead class="text-center">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -43,8 +47,9 @@
                                 <TableCell>{{ floor.name }}</TableCell>
                                 <TableCell>{{ floor.number }}</TableCell>
                                 <TableCell>{{ floor.created_at || 'N/A' }}</TableCell>
-                                <TableCell v-if="url.startsWith('/admin/floors')">
+                                <TableCell>
                                     {{ floor.manager_name || 'N/A' }}
+                                    <span v-if="floor.is_own_floor" class="ml-2 text-xs text-green-500">(Yours)</span>
                                 </TableCell>
                                 <TableCell class="text-center">
                                     <div class="flex justify-center gap-2">
@@ -74,7 +79,7 @@
                                 </TableCell>
                             </TableRow>
                             <TableRow v-if="floors.length === 0">
-                                <TableCell :colspan="url.startsWith('/admin/floors') ? 5 : 4" class="text-center py-8 text-muted-foreground">
+                                <TableCell colspan="5" class="text-center py-8 text-muted-foreground">
                                     No floors found
                                 </TableCell>
                             </TableRow>
@@ -107,16 +112,24 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Pencil, Trash } from 'lucide-vue-next';
 
-// Access the current URL
-const { url } = usePage();
+const { props } = usePage();
 
-const props = defineProps({
-    floors: Array,
-    managers: Array
-});
+
 
 const floors = ref(props.floors);
+
+const handleFloorCreated = (newFloor) => {
+  // Check if the floor already exists to avoid duplicates
+  if (!floors.value.some(f => f.id === newFloor.id)) {
+    floors.value.unshift(newFloor);
+  }
+};
+
+
+
 const managers = ref(props.managers);
+const is_manager_view = ref(props.is_manager_view);
+const canCreate = ref(props.canCreate);
 
 const addFloorDialog = ref(null);
 const viewDialog = ref(null);
@@ -124,6 +137,11 @@ const confirmationDialog = ref(null);
 const selectedFloor = ref({});
 const floorToDelete = ref(null);
 
+
+
+const handleSuccess = () => {
+  // Optional: Add any success handling logic
+};
 
 const openAddDialog = () => {
     addFloorDialog.value.open();
@@ -149,10 +167,10 @@ const openDeleteDialog = (floor) => {
 
 const confirmDelete = () => {
     if (floorToDelete.value) {
-        router.delete(`/admin/floors/${floorToDelete.value.id}`, {
+        const routePrefix = is_manager_view.value ? '/manager' : '/admin';
+        router.delete(`${routePrefix}/floors/${floorToDelete.value.id}`, {
             preserveScroll: true,
             onSuccess: () => {
-                // Remove the deleted floor from the list
                 floors.value = floors.value.filter(f => f.id !== floorToDelete.value.id);
             },
             onError: (error) => {

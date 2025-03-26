@@ -4,14 +4,14 @@
         <slot></slot>
       </DialogTrigger>
       <DialogContent class="sm:max-w-[425px]">
-        <form @submit.prevent="submitForm"> <!-- Added form wrapper -->
+        <form @submit.prevent="submitForm">
           <DialogHeader>
             <DialogTitle>{{ isEditing ? 'Edit Floor' : 'Add New Floor' }}</DialogTitle>
             <DialogDescription>
               {{ isEditing ? 'Modify floor details' : 'Enter details for new floor' }}
             </DialogDescription>
           </DialogHeader>
-
+  
           <div class="grid gap-4 py-4">
             <div class="grid grid-cols-4 items-center gap-4">
               <Label for="name" class="text-right">
@@ -25,8 +25,8 @@
                 required
               />
             </div>
-
-            <div v-if="isAdmin" class="grid grid-cols-4 items-center gap-4">
+  
+            <div v-if="isAdmin && !isEditing" class="grid grid-cols-4 items-center gap-4">
               <Label for="manager" class="text-right">
                 Manager
               </Label>
@@ -49,7 +49,7 @@
               </Select>
             </div>
           </div>
-
+  
           <DialogFooter>
             <Button type="button" variant="outline" @click="closeDialog">
               Cancel
@@ -63,9 +63,9 @@
       </DialogContent>
     </Dialog>
   </template>
-
+  
   <script setup>
-  import { ref, computed } from 'vue';
+  import { ref, computed, onMounted } from 'vue';
   import { usePage, router } from '@inertiajs/vue3';
   import {
     Dialog,
@@ -89,19 +89,20 @@
     SelectValue,
   } from '@/components/ui/select';
   import { Loader2 } from 'lucide-vue-next';
-
+  
   const props = defineProps({
     managers: {
       type: Array,
       required: true
     }
   });
-
-  const emit = defineEmits(['success']);
-
+  
+  const emit = defineEmits(['success', 'created']);
+  
   const page = usePage();
-  const isAdmin = computed(() => page.url.startsWith('/admin'));
-
+  const isAdmin = computed(() => page.props.auth.user.role === 'admin');
+  const isManager = computed(() => page.props.auth.user.role === 'manager');
+  
   const isOpen = ref(false);
   const form = ref({
     name: '',
@@ -111,8 +112,13 @@
   const isSubmitting = ref(false);
   const isEditing = ref(false);
   const editingId = ref(null);
-
-
+  
+  onMounted(() => {
+    if (!isAdmin.value) {
+      form.value.manager_id = page.props.auth.user.id;
+    }
+  });
+  
   const submitForm = async () => {
   if (!form.value.name) {
     errors.value = { name: 'Floor name is required' };
@@ -122,35 +128,37 @@
   isSubmitting.value = true;
 
   try {
+    const urlPrefix = isAdmin.value ? '/admin' : '/manager';
     const url = isEditing.value
-      ? `/admin/floors/${editingId.value}`
-      : '/admin/floors';
+      ? `${urlPrefix}/floors/${editingId.value}`
+      : `${urlPrefix}/floors`;
 
     const method = isEditing.value ? 'put' : 'post';
 
     await router[method](url, form.value, {
       preserveScroll: true,
-      onSuccess: () => {
+      preserveState: true,
+      onSuccess: (page) => {
+        if (page.props.flash?.floor) {
+          emit('created', page.props.flash.floor);
+        }
         emit('success');
         closeDialog();
-        // Only reload if you really need to
-        if (isEditing.value) {
-          router.reload({ only: ['floors'] });
-        } else {
-          window.location.reload();
-        }
       },
       onError: (err) => {
         errors.value = err;
+      },
+      onFinish: () => {
+        isSubmitting.value = false;
       }
     });
   } catch (error) {
     console.error('Submission error:', error);
-  } finally {
     isSubmitting.value = false;
   }
 };
 
+  
   const open = (floor = null) => {
     if (floor) {
       isEditing.value = true;
@@ -161,25 +169,31 @@
       };
     } else {
       resetForm();
+      if (isManager.value) {
+        form.value.manager_id = page.props.auth.user.id;
+      }
     }
     isOpen.value = true;
   };
+  
+ 
+const closeDialog = () => {
+  document.activeElement.blur();
+  isOpen.value = false;
+  resetForm();
+};
 
-  const closeDialog = () => {
-    isOpen.value = false;
-    resetForm();
-  };
-
+  
   const resetForm = () => {
     form.value = {
       name: '',
-      manager_id: null
+      manager_id: isManager.value ? page.props.auth.user.id : null
     };
     errors.value = {};
     isEditing.value = false;
     editingId.value = null;
   };
-
+  
   defineExpose({
     open,
     close: closeDialog
