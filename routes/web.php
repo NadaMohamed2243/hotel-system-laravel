@@ -47,37 +47,33 @@ Route::prefix('dashboard/receptionist')->middleware(['auth', 'verified'])->group
     Route::delete('/clients/delete/{id}', [ClientController::class, 'delete'])->name('receptionist.unapproveClient');
 });
 //-----------------------------------Rooms--------------------------------------------
-//Room routes for admin
-Route::prefix('admin/rooms')->
-    middleware(['auth', 'verified','permission:manage rooms'])->
-    group(function () {
-        Route::get('/', [RoomController::class, 'index'])->name('rooms.index');
-        Route::post('/', [RoomController::class, 'store'])->name('rooms.store');
-        Route::delete('/{room}', [RoomController::class, 'destroy'])->name('rooms.destroy');
-        Route::get('/{room}/edit', [RoomController::class, 'edit'])->name('rooms.edit');
-        Route::put('/{room}', [RoomController::class, 'update'])->name('rooms.update');
-});
-//Room routes for manager
-Route::prefix('manager/rooms')->
-    middleware(['auth', 'verified','permission:manage rooms'])->
-    group(function () {
-        Route::get('/', [RoomController::class, 'index'])->name('rooms.index');
-        Route::post('/', [RoomController::class, 'store'])->name('rooms.store');
-        Route::delete('/{room}', [RoomController::class, 'destroy'])->name('rooms.destroy');
-        Route::get('/{room}/edit', [RoomController::class, 'edit'])->name('rooms.edit');
-        Route::put('/{room}', [RoomController::class, 'update'])->name('rooms.update');
-});
-
+// Room routes for Admin and Manager
+foreach (['admin', 'manager'] as $role) {
+    Route::prefix("$role/rooms")
+        ->middleware(['auth', 'verified', 'permission:manage rooms'])
+        ->name("$role.rooms.")
+        ->group(function () {
+            Route::get('/', [RoomController::class, 'index'])->name('index');
+            Route::post('/', [RoomController::class, 'store'])->name('store');
+            Route::delete('/{room}', [RoomController::class, 'destroy'])->name('destroy');
+            Route::get('/{room}/edit', [RoomController::class, 'edit'])->name('edit');
+            Route::put('/{room}', [RoomController::class, 'update'])->name('update');
+        });
+}
 //-----------------------------------Clients--------------------------------------------
-Route::prefix('manager/clients')->
-    middleware(['auth', 'verified','permission:manage clients'])->
-    group(function () {
-        Route::get('/', [ClientController::class,'index'])->name('clients.index');
-        //Route::post('/', [RoomController::class, 'store'])->name('rooms.store');
-        //Route::delete('/{room}', [RoomController::class, 'destroy'])->name('rooms.destroy');
-        //Route::get('/{room}/edit', [RoomController::class, 'edit'])->name('rooms.edit');
-        //Route::put('/{room}', [RoomController::class, 'update'])->name('rooms.update');
-});
+// Client routes for Admin and Manager
+foreach (['admin', 'manager'] as $role) {
+    Route::prefix("$role/clients")
+        ->middleware(['auth', 'verified', 'permission:manage clients'])
+        ->name("$role.clients.")
+        ->group(function () {
+            Route::get('/', [ClientController::class, 'index'])->name('index');
+            Route::post('/', [ClientController::class, 'store'])->name('store');
+            Route::delete('/{client}', [ClientController::class, 'destroy'])->name('destroy');
+            Route::put('/{client}', [ClientController::class, 'updateClient'])->name('updateClient');
+            Route::post('/validate-step1', [ClientController::class, 'validateStep1'])->name('validateStep1');
+        });
+}
 
 
 require __DIR__.'/settings.php';
