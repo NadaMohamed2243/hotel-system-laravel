@@ -1,13 +1,16 @@
 <script setup lang="ts">
-// import AppLayout from '@/layouts/ReceptionistLayout.vue';
-import AppLayout from '@/layouts/AdminAppLayout.vue';
+// import AppLayout from '@/layouts/AdminAppLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { type BreadcrumbItem } from '@/types';
+// import { type BreadcrumbItem } from '@/types';
 import { ref, computed, h } from 'vue';
 import { router } from '@inertiajs/vue3';
 import DataTable from '@/components/DataTable.vue'; // Import the DataTable component
 import { Button } from '@/components/ui/button';
+import ClientManagement from '@/layouts/ManageClients.vue';
 
+defineOptions({
+    layout: ClientManagement,
+});
 export interface Client {
     id: number;
     user?: {
@@ -74,16 +77,16 @@ const columns = [
     },
 ];
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Receptionist Dashboard',
-        href: '/dashboard/receptionist',
-    },
-    {
-        title: 'Pending Clients',
-        href: '/dashboard/receptionist/pending-clients',
-    },
-];
+// const breadcrumbs: BreadcrumbItem[] = [
+//     {
+//         title: 'Receptionist Dashboard',
+//         href: '/dashboard/receptionist',
+//     },
+//     {
+//         title: 'Pending Clients',
+//         href: '/dashboard/receptionist/pending-clients',
+//     },
+// ];
 
 
 
@@ -135,7 +138,7 @@ const unapproveClient = async (client: Client) => {
     <div>
 
         <Head title="my Pending Clients" />
-        <AppLayout :breadcrumbs="breadcrumbs">
+        <!-- <AppLayout :breadcrumbs="breadcrumbs"> -->
             <div class="space-y-4">
                 <h1 class="m-4 text-2xl font-bold text-gray-800 dark:text-gray-200">My Pending Clients</h1>
                 <DataTable :data="clients" :columns="columns" :pagination="props.pagination" :manual-pagination="true"
@@ -161,7 +164,7 @@ const unapproveClient = async (client: Client) => {
                 </DataTable>
 
             </div>
-        </AppLayout>
+        <!-- </AppLayout> -->
 
     </div>
 </template>

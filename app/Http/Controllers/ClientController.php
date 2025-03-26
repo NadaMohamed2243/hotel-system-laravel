@@ -18,7 +18,7 @@ class ClientController extends Controller
     {
         // Get pagination parameters from the request
         $page = Request()->query('page', 1); // Default to page 1
-        $pageSize = Request()->query('pageSize', 7); // Default to 7 rows per page
+        $pageSize = Request()->query('pageSize', 5); // Default to 7 rows per page
 
         // Fetch paginated clients with 'pending' status
         $clients = Client::where('status', 'pending')
@@ -44,7 +44,7 @@ class ClientController extends Controller
 
         // Get pagination parameters from the request
         $page = Request()->query('page', 1); // Default to page 1
-        $pageSize = Request()->query('pageSize', 8); // Default to 9 rows per page
+        $pageSize = Request()->query('pageSize', 5); // Default to 9 rows per page
 
 
         // Fetch paginated clients approved by the logged-in receptionist

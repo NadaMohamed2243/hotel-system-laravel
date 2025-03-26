@@ -63,25 +63,33 @@ const mainNavItems = computed(() => {
     }
 
 
-    if (can.value.approve_client) {
+    // if (can.value.approve_client) {
+    //     items.push({
+    //         title: 'Manage Pending Clients',
+    //         href: '/dashboard/receptionist/clients/pending',
+    //         icon: Users,
+    //     });
+    // }
+    // if (can.value.view_approved_clients) {
+    //     items.push({
+    //         title: 'My Approved Clients',
+    //         href: '/dashboard/receptionist/clients/approved',
+    //         icon: Users,
+    //     });
+    // }
+    // if (can.value.view_client_reservations) {
+    //     items.push({
+    //         title: 'My Clients Reservations',
+    //         href: '/dashboard/receptionist/clients/reservations',
+    //         icon: Hotel,
+    //     });
+    // }
+
+    if (can.value.approve_client || can.value.view_approved_clients || can.value.view_client_reservations) {
         items.push({
-            title: 'Manage Pending Clients',
+            title: 'Manage Clients',
             href: '/dashboard/receptionist/clients/pending',
             icon: Users,
-        });
-    }
-    if (can.value.view_approved_clients) {
-        items.push({
-            title: 'My Approved Clients',
-            href: '/dashboard/receptionist/clients/approved',
-            icon: Users,
-        });
-    }
-    if (can.value.view_client_reservations) {
-        items.push({
-            title: 'My Clients Reservations',
-            href: '/dashboard/receptionist/clients/reservations',
-            icon: Hotel,
         });
     }
 

@@ -20,7 +20,7 @@ class ClientReservationController extends Controller
             ]);
 
             $page = $validated['page'] ?? 1;
-            $pageSize = $validated['pageSize'] ?? 8;
+            $pageSize = $validated['pageSize'] ?? 5;
             $receptionistId = Auth::id();
 
             $reservations = Reservation::whereHas('client', function ($query) use ($receptionistId) {

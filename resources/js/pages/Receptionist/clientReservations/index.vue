@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import AppLayout from '@/layouts/AdminAppLayout.vue';
+// import AppLayout from '@/layouts/AdminAppLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { type BreadcrumbItem } from '@/types';
+// import { type BreadcrumbItem } from '@/types';
 import { ref, computed, h } from 'vue';
 import { router } from '@inertiajs/vue3';
 import DataTable from '@/components/DataTable.vue';
+import ClientManagement from '@/layouts/ManageClients.vue';
 
+defineOptions({
+    layout: ClientManagement,
+});
 export interface User {
   id: number;
   name: string;
@@ -43,7 +47,7 @@ const props = defineProps<{
   };
 }>();
 
-const reservations = computed(() => props.reservations);
+// const reservations = computed(() => props.reservations);
 
 const columns = [
   {
@@ -87,22 +91,22 @@ const columns = [
   },
 ];
 
-const breadcrumbs: BreadcrumbItem[] = [
-  {
-    title: 'Receptionist Dashboard',
-    href: '/dashboard/receptionist',
-  },
-  {
-    title: 'Client Reservations',
-    href: '/dashboard/receptionist/client-reservations',
-  },
-];
+// const breadcrumbs: BreadcrumbItem[] = [
+//   {
+//     title: 'Receptionist Dashboard',
+//     href: '/dashboard/receptionist',
+//   },
+//   {
+//     title: 'Client Reservations',
+//     href: '/dashboard/receptionist/client-reservations',
+//   },
+// ];
 </script>
 
 <template>
   <div>
     <Head title="Client Reservations" />
-    <AppLayout :breadcrumbs="breadcrumbs">
+    <!-- <AppLayout :breadcrumbs="breadcrumbs"> -->
       <div class="space-y-4">
       <h1 class="m-4 text-2xl font-bold text-gray-800 dark:text-gray-200">Client Reservations</h1>
       <DataTable
@@ -118,6 +122,6 @@ const breadcrumbs: BreadcrumbItem[] = [
         }"
       />
     </div>
-    </AppLayout>
+    <!-- </AppLayout> -->
   </div>
 </template>
