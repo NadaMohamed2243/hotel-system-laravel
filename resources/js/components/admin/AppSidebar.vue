@@ -22,10 +22,14 @@ else if(user.value.role==='admin'){
     roleRoute="/admin";
 }
 // console.log(`${role}/floors`);
+const role = computed(() => user.value?.role); // Get user role
+console.log(role.value);
+
 // Core navigation items everyone can see
+
 const dashboardItem = {
     title: 'Dashboard',
-    href: '/admin/dashboard',
+    href: (role.value == "admin") ? '/admin/dashboard' : '/manager/dashboard',
     icon: LayoutGrid,
 };
 
@@ -43,16 +47,27 @@ const mainNavItems = computed(() => {
     }
 
     // Add other menu items based on permissions
-    if (can.value.view_receptionists || can.value.manage_receptionists) {
-        items.push({
-            title: 'Manage Receptionists',
-            href: '/admin/receptionists',
-            icon: Users,
-        });
+    if (can.value.manage_receptionists) {
+
+        if (role.value == "manager") {
+            items.push({
+                title: 'Manage Receptionists',
+                href: '/manager/receptionists',
+                icon: Users,
+            });
+        }
+
+        else {
+            items.push({
+                title: 'Manage Receptionists',
+                href: '/admin/receptionists',
+                icon: Users,
+            });
+        }
 
     }
 
-    if (can.value.view_clients || can.value.manage_clients) {
+    if (can.value.manage_clients) {
         items.push({
             title: 'Manage Clients',
             href: `${roleRoute}/clients`,
@@ -76,15 +91,25 @@ const mainNavItems = computed(() => {
 
     }
 
-    if (can.value.view_floors || can.value.manage_floors) {
-        items.push({
-            title: 'Manage Floors',
-            href: '/admin/floors',
-            icon: Hotel,
-        });
+    if (can.value.manage_floors) {
+
+        if (role.value == "manager") {
+            items.push({
+                title: 'Manage Floors',
+                href: '/manager/floors',
+                icon: Hotel,
+            });
+        }
+        else {
+            items.push({
+                title: 'Manage Floors',
+                href: '/admin/floors',
+                icon: Hotel,
+            });
+        }
     }
 
-    if (can.value.view_rooms || can.value.manage_rooms) {
+    if (can.value.manage_rooms) {
         items.push({
             title: 'Manage Rooms',
             href: `${roleRoute}/rooms`,

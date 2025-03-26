@@ -57,7 +57,7 @@ class RoomController extends Controller
 
     // Store the room
     Room::create($validatedData);
-    return redirect()->route('rooms.index');
+    return redirect()->back();
     }
 
     public function update(Request $request,Room $room){
@@ -72,7 +72,7 @@ class RoomController extends Controller
 
         $room->update($validatedData);
 
-        return redirect()->route('rooms.index')->with('success', 'Room updated successfully.');
+        return redirect()->back();
     }
 
     public function destroy($id){
@@ -80,10 +80,10 @@ class RoomController extends Controller
         if ($room && $room->is_reserved == 0){
             $room->delete();
             $this->reset_custom_id();
-            return redirect()->route('rooms.index');
+            return redirect()->back();
         }
         else{
-            return redirect()->route('rooms.index')->with('error', 'Room is reserved.');
+            return redirect()->back()->with('error', 'Room is reserved.');
         }
     }
     //to update the order of showing id

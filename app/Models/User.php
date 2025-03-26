@@ -6,12 +6,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles;
+use Spatie\Permission\Traits\HasRoles; // Add this line
+
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles;
+    use HasFactory, Notifiable ,HasRoles;
 
     /**
      * The attributes that are mass assignable.
@@ -55,5 +56,38 @@ class User extends Authenticatable
     public function client()
     {
         return $this->hasOne(Client::class, 'user_id');
+    }
+
+        /**
+     * Define the relationship with the Receptionist model.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    public function receptionist()
+    {
+        return $this->hasOne(Receptionist::class);
+    }
+
+    /**
+     * Define the relationship with Receptionists managed by this user (Manager).
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function managedReceptionists()
+    {
+        return $this->hasMany(Receptionist::class, 'manager_id');
+    }
+
+    protected static function booted()
+    {
+        // static::created(function ($user) {
+        //     if ($user->role === 'receptionist') {
+        //         Receptionist::create([
+        //             'user_id' => $user->id,
+        //             'manager_id' => auth()->user()?->id ?? 1, // Default to manager ID 1 if no authenticated user
+        //             'is_banned' => false,
+        //         ]);
+        //     }
+        // });
     }
 }
