@@ -2,8 +2,8 @@
 
 namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use app\Models\Floor;
-use app\Models\User;
+use App\Models\Floor;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
 class Room extends Model
