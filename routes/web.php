@@ -4,6 +4,12 @@ use App\Http\Controllers\ClientReservationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\ManagerController;
+
+use App\Http\Controllers\Auth\RegisteredUserController;  //H
+use Illuminate\Support\Facades\Auth;//H
+use App\Http\Controllers\ReservationController; //H
+
+
 use App\Http\Controllers\RoomController;
 
 use App\Http\Controllers\ReceptionistController;
@@ -13,10 +19,7 @@ Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
 
-// Client dashboard
-Route::get('dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified', 'client.only'])->name('dashboard');
+
 
 // Admin dashboard
 Route::get('admin/dashboard', function () {
@@ -78,6 +81,71 @@ foreach (['admin', 'manager'] as $role) {
             Route::post('/validate-step1', [ClientController::class, 'validateStep1'])->name('validateStep1');
         });
 }
+
+//-----------------------------------client  //H --------------------------------------------
+Route::get('/register', [RegisteredUserController::class, 'create'])->name('register');
+Route::post('/register', [RegisteredUserController::class, 'store']);
+
+
+Route::get('/pending-approval', function () {
+    return Inertia::render('PendingApproval');
+})->name('pending.approval')->middleware('auth');
+
+
+//Client dashboard - only accessible by clients
+Route::get('/dashboard', function () {
+    $user = Auth::user();
+    $user->load('client');
+
+    if ($user->client && $user->client->status !== 'approved') {
+        return redirect()->route('pending.approval');
+    }
+
+    return Inertia::render('HClient/ClientDashboard');
+})->middleware(['auth'])->name('dashboard');
+
+
+
+
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    
+    // Show available rooms for reservation
+    Route::get('/client/make-reservation', [ReservationController::class, 'showAvailableRooms'])
+        ->name('client.makeReservation');
+
+    // Show reservation form for a specific room
+    Route::get('/client/make-reservation/{roomId}', [ReservationController::class, 'showReservationForm'])
+        ->name('client.showReservationForm');
+
+    // Store reservation
+    Route::post('/client/reserve', [ReservationController::class, 'storeReservation'])
+        ->name('client.reserve');
+
+    // Cancel reservation
+    Route::post('/client/cancel-reservation', [ReservationController::class, 'cancelReservation'])
+        ->name('client.cancelReservation');
+
+    // Show client's reservations
+    Route::get('/client/my-reservations', [ReservationController::class, 'myReservations'])
+        ->name('client.reservations');
+
+    Route::get('/client/make-reservation/{roomId}/payment', [ReservationController::class, 'showPaymentForm'])
+    ->name('client.payment');
+
+    Route::post('/client/payment/{roomId}', [ReservationController::class, 'processPayment']);
+
+    
+        Route::prefix('client')->middleware('auth')->group(function() {
+            // 
+            Route::post('/create-payment-intent', [ReservationController::class, 'createPaymentIntent'])->name('client.createPaymentIntent');
+        });
+        
+});
+
+
+
+
 
 
 require __DIR__.'/settings.php';
