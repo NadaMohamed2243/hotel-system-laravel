@@ -1,3 +1,4 @@
+
 <template>
     <Dialog v-model:open="isOpen">
       <DialogTrigger as-child>
@@ -17,13 +18,19 @@
               <Label for="name" class="text-right">
                 Name <span class="text-red-500">*</span>
               </Label>
-              <Input
-                id="name"
-                v-model="form.name"
-                class="col-span-3"
-                placeholder="Floor name (e.g., Ground Floor)"
-                required
-              />
+              <div class="col-span-3">
+                <Input
+                  id="name"
+                  v-model="form.name"
+                  class="w-full"
+                  :class="{ 'border-red-500': errors.name }"
+                  placeholder="Floor name (e.g., Ground Floor)"
+                  required
+                />
+                <div v-if="errors.name" class="text-red-500 text-sm mt-1">
+                  {{ errors.name }}
+                </div>
+              </div>
             </div>
   
             <div v-if="isAdmin && !isEditing" class="grid grid-cols-4 items-center gap-4">
@@ -62,9 +69,10 @@
         </form>
       </DialogContent>
     </Dialog>
-  </template>
-  
-  <script setup>
+</template>
+
+
+<script setup>
   import { ref, computed, onMounted } from 'vue';
   import { usePage, router } from '@inertiajs/vue3';
   import {
@@ -126,6 +134,10 @@ const emit = defineEmits(['success', 'created', 'updated']);
 const submitForm = async () => {
   if (!form.value.name) {
     errors.value = { name: 'Floor name is required' };
+    return;
+  }
+  if (form.value.name.length < 3) {
+    errors.value.name = 'Floor name must be at least 3 characters';
     return;
   }
 

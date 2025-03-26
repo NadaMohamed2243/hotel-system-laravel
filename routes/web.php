@@ -133,7 +133,7 @@ Route::prefix('manager')->middleware(['auth'])->group(function () {
 
 // Manager-specific floor routes
 Route::prefix('manager/floors')
-    ->middleware(['auth', 'verified', 'permission:manage floors'])
+    ->middleware(['auth', 'verified', 'role:manager','permission:manage floors'])
     ->group(function () {
         Route::get('/', [FloorController::class, 'index'])->name('manager.floors.index');
         Route::get('/create', [FloorController::class, 'create'])->name('manager.floors.create');
