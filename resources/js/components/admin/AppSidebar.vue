@@ -13,13 +13,13 @@ import AppLogo from '../AppLogo.vue';
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const can = computed(() => page.props.auth.can || {});
-let role='';
+let roleRoute='';
 // console.log(user.value.role);
 if(user.value.role==='manager'){
-    role="/manager";
+    roleRoute="/manager";
 }
 else if(user.value.role==='admin'){
-    role="/admin";
+    roleRoute="/admin";
 }
 // console.log(`${role}/floors`);
 // Core navigation items everyone can see
@@ -55,7 +55,7 @@ const mainNavItems = computed(() => {
     if (can.value.view_clients || can.value.manage_clients) {
         items.push({
             title: 'Manage Clients',
-            href: `${role}/clients`,
+            href: `${roleRoute}/clients`,
             icon: Users,
         });
         items.push({
@@ -87,7 +87,7 @@ const mainNavItems = computed(() => {
     if (can.value.view_rooms || can.value.manage_rooms) {
         items.push({
             title: 'Manage Rooms',
-            href: `${role}/rooms`,
+            href: `${roleRoute}/rooms`,
             icon: Home,
         });
     }
