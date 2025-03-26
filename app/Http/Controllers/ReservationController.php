@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 use App\Models\Reservation;
 use App\Models\Room;
 use Stripe\Stripe;
@@ -15,12 +16,42 @@ use Stripe\PaymentIntent;
 class ReservationController extends Controller
 {
 
+    public function index(Request $request)
+     {
+         try {
+             $validated = $request->validate([
+                 'page' => 'sometimes|integer|min:1',
+                 'pageSize' => 'sometimes|integer|min:1|max:100',
+             ]);
+
+             $page = $validated['page'] ?? 1;
+             $pageSize = $validated['pageSize'] ?? 5;
+
+             $reservations = Reservation::whereHas('client')
+                 ->with(['client.user:id,name,email', 'room:id,number'])
+                 ->orderBy('created_at', 'desc')
+                 ->paginate($pageSize, ['*'], 'page', $page);
+
+             return Inertia::render('Managers/clientReservations/index', [
+                 'reservations' => $reservations->items(),
+                 'pagination' => [ // Make sure this matches your frontend expectation
+                     'page' => $reservations->currentPage(),
+                     'pageSize' => $reservations->perPage(),
+                     'total' => $reservations->total(),
+                 ],
+             ]);
+
+         } catch (\Exception $e) {
+             Log::error('ClientReservationController error: ' . $e->getMessage());
+             return back()->with('error', 'Failed to load reservations');
+         }
+     }
 
     // Display the user's reservations
     public function myReservations()
     {
         $user = Auth::user();
-        
+
         if (!$user->client) {
             abort(403, 'Unauthorized');
         }
@@ -38,11 +69,11 @@ class ReservationController extends Controller
     public function showAvailableRooms()
     {
         $availableRooms = Room::where('is_reserved', false)
-        ->select('id', 'number', 'capacity', 'price', 'is_reserved') 
+        ->select('id', 'number', 'capacity', 'price', 'is_reserved')
         ->get();
-        
+
         // dd($availableRooms); // 🔍
-        
+
         return Inertia::render('HClient/MakeReservation', [
             'rooms' => $availableRooms
         ]);
@@ -59,18 +90,18 @@ class ReservationController extends Controller
     public function storeReservation(Request $request)
     {
         //
-        \Log::info('Received reservation request:', $request->all());
-    
+        Log::info('Received reservation request:', $request->all());
+
         $room = Room::findOrFail($request->room_id);
-    
+
         if ($room->is_reserved) {
             return Inertia::render('ErrorPage', ['message' => 'This room is already reserved']);
         }
-    
+
         if ($request->accompany_number > $room->capacity) {
             return back()->withErrors(['accompany_number' => 'Exceeds room capacity']);
         }
-    
+
         //reserve the room
         $reservation = Reservation::create([
             'client_id' => Auth::user()->client->id,
@@ -79,24 +110,24 @@ class ReservationController extends Controller
             'paid_price' => $room->price,
             'reserved_at' => now(),
         ]);
-    
+
         //add reservation message
-        \Log::info('Reservation stored successfully:', $reservation);
+        Log::info('Reservation stored successfully:', $reservation);
 
         //create a payment intent
         $paymentIntent = $this->createPaymentIntent($room->price);
-    
-        // 
+
+        //
         return Inertia::render('PaymentPage', [
             'roomId' => $room->id,
             'clientSecret' => $paymentIntent['clientSecret'],
         ]);
             }
-    
 
-   
 
-    
+
+
+
 
 
 
@@ -104,15 +135,15 @@ class ReservationController extends Controller
       public function showPaymentForm($roomId)
       {
           $room = Room::find($roomId);
-      
+
           if (!$room) {
               return redirect()->route('client.reservations')->with('error', 'Room not found');
           }
-      
+
           return inertia('HClient/PaymentForm', ['room' => $room]);
       }
 
-  
+
       //
 public function processPayment(Request $request, $roomId)
 {
@@ -127,7 +158,7 @@ public function processPayment(Request $request, $roomId)
     try {
         Stripe::setApiKey(env('STRIPE_SECRET_KEY'));
 
-        
+
         $paymentIntent = PaymentIntent::create([
             'amount' => $room->price * 100, //price in cents
             'currency' => 'usd',
@@ -158,13 +189,13 @@ public function processPayment(Request $request, $roomId)
       public function createPaymentIntent($amount)
       {
           Stripe::setApiKey(env('STRIPE_SECRET_KEY'));
-      
+
           try {
               $paymentIntent = PaymentIntent::create([
                   'amount' => $amount * 100, // amount in cents
                   'currency' => 'usd',
               ]);
-      
+
               return ['clientSecret' => $paymentIntent->client_secret];
           } catch (\Exception $e) {
               return ['error' => $e->getMessage()];

@@ -14,7 +14,6 @@ use App\Http\Controllers\RoomController;
 
 use App\Http\Controllers\ReceptionistController;
 use App\Http\Controllers\FloorController;
-use App\Http\Controllers\ReservationController;
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
@@ -109,7 +108,7 @@ Route::get('/dashboard', function () {
 
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    
+
     // Show available rooms for reservation
     Route::get('/client/make-reservation', [ReservationController::class, 'showAvailableRooms'])
         ->name('client.makeReservation');
@@ -135,12 +134,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/client/payment/{roomId}', [ReservationController::class, 'processPayment']);
 
-    
+
         Route::prefix('client')->middleware('auth')->group(function() {
-            // 
+            //
             Route::post('/create-payment-intent', [ReservationController::class, 'createPaymentIntent'])->name('client.createPaymentIntent');
         });
-        
+
 });
 
 

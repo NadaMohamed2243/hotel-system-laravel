@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('rooms', function (Blueprint $table) {
-            $table->foreignId('floor_id')->constrained('floors')->onDelete('restrict');
-        });
+        // Schema::table('rooms', function (Blueprint $table) {
+        //     $table->foreignId('floor_id')->constrained('floors')->onDelete('restrict');
+        // });
     }
 
     /**
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('rooms', function (Blueprint $table) {
-            //
-        });
+        // Schema::table('rooms', function (Blueprint $table) {
+        //     //
+        // });
     }
 };
