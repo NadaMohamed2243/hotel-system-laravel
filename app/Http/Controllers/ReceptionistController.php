@@ -17,13 +17,21 @@ class ReceptionistController extends Controller
 
     public function create()
     {
-        $managers = User::where('role', 'manager')
-        ->select('id', 'name', 'email')
-        ->get();
 
-        return inertia('Admin/Receptionists/Create', [
-        'managers' => $managers
-        ]);
+        $managers = [];
+
+    // Only show managers dropdown for admin
+    if (auth()->user()->role === 'admin') {
+        $managers = User::where('role', 'manager')
+            ->select('id', 'name', 'email')
+            ->get();
+    }
+
+    return inertia('Admin/Receptionists/Create', [
+        'managers' => $managers,
+        'currentManagerId' => auth()->user()->role === 'manager' ? auth()->id() : null
+    ]);
+
     }
 
 
@@ -109,6 +117,13 @@ class ReceptionistController extends Controller
             'national_id.unique' => 'This national ID is already registered in our system',
         ]);
 
+
+        //    // For managers, set the manager_id to the current user ID
+        if (auth()->user()->role === 'manager') {
+            $validated['manager_id'] = auth()->id();
+        }
+
+
         // Handle avatar upload
         $avatarPath = null;
         if ($request->hasFile('avatar')) {
@@ -125,11 +140,19 @@ class ReceptionistController extends Controller
             'avatar_image' => $avatarPath,
         ]);
 
+        $user->assignRole('receptionist');
+
         // Create receptionist record
         $receptionist = Receptionist::create([
             'user_id' => $user->id,
             'manager_id' => $validated['manager_id'],
         ]);
+
+        return redirect()->route($this->isManagerRoute()
+        ? 'manager.receptionists.index'
+        : 'admin.receptionists.index')
+        ->with('success', 'Receptionist added successfully');
+
 
         return Inertia::render('Receptionists/Index', [
             'receptionists' => Receptionist::with(['user', 'manager'])->get(),
@@ -245,6 +268,11 @@ class ReceptionistController extends Controller
             return redirect()->back()->with('success', 'Receptionist unbanned successfully.');
     }
 
+
+    function isManagerRoute()
+    {
+        return request()->is('manager/*');
+    }
 }
 
 

@@ -86,6 +86,11 @@
                                 </TableCell>
                                 <TableCell class="text-center">
                                     <div class="flex justify-center gap-2">
+
+                                        <Button variant="outline" size="sm" @click="viewReceptionist(receptionist)">
+                                            <Eye class="h-4 w-4 mr-1" />
+                                            View
+                                        </Button>
                                         <Button
                                             variant="outline"
                                             size="sm"
@@ -295,12 +300,24 @@ const toggleBanStatus = (receptionist) => {
 
 const handleReceptionistAdded = (receptionist) => {
   if (receptionist.is_temp) {
-    // Add temporary receptionist
-    receptionists.value = [...receptionists.value, receptionist];
+    // Add temporary receptionist with proper manager data
+    const manager = props.managers.find(m => m.id === receptionist.manager_id) ||
+                   { name: 'You', email: page.props.auth.user.email };
+
+    receptionists.value = [...receptionists.value, {
+      ...receptionist,
+      manager_name: manager.name,
+      manager_email: manager.email,
+      manager_id: receptionist.manager_id
+    }];
   } else {
     // Replace temporary receptionist with real one
     receptionists.value = receptionists.value.map(r =>
-      r.is_temp && r.email === receptionist.email ? receptionist : r
+      r.is_temp && r.email === receptionist.email ? {
+        ...receptionist,
+        manager_name: receptionist.manager?.name || 'You',
+        manager_email: receptionist.manager?.email || page.props.auth.user.email
+      } : r
     );
   }
 };
