@@ -8,7 +8,7 @@ use App\Http\Controllers\RoomController;
 
 use App\Http\Controllers\ReceptionistController;
 use App\Http\Controllers\FloorController;
-
+use App\Http\Controllers\ReservationController;
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
@@ -132,4 +132,12 @@ Route::prefix('manager')->middleware(['auth'])->group(function () {
     });
 
 
+});
+
+
+Route::prefix('admin')->middleware(['auth', 'verified', 'permission:manage reservations'])->group(function () {
+    Route::get('/clients/reservations', [ReservationController::class, 'index'])->name('admin.clientReservations');
+});
+Route::prefix('manager')->middleware(['auth', 'verified', 'permission:manage reservations'])->group(function () {
+    Route::get('/clients/reservations', [ReservationController::class, 'index'])->name('manager.clientReservations');
 });

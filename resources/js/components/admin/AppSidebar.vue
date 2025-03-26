@@ -119,10 +119,10 @@ const mainNavItems = computed(() => {
         });
     }
 
-    if (can.value.view_reservations || can.value.view_client_reservations) {
+    if (can.value.view_reservations || can.value.manage_reservations) {
         items.push({
             title: 'Reservations',
-            href: '/admin/reservations',
+            href: '/admin/clients/reservations',
             icon: Calendar,
         });
     }
