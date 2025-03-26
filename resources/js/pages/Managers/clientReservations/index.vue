@@ -6,9 +6,10 @@ import { ref, computed, h } from 'vue';
 import { router } from '@inertiajs/vue3';
 import DataTable from '@/components/DataTable.vue';
 import ClientManagement from '@/layouts/ManageClients.vue';
+import AppLayout from '@/layouts/AdminAppLayout.vue';
 
 defineOptions({
-    layout: ClientManagement,
+  layout: AppLayout,
 });
 export interface User {
   id: number;
@@ -82,12 +83,12 @@ const columns = [
     //   return h('div', { class: 'text-left font-medium' }, price);
     // },
     accessorKey: 'paid_price',
-        header: () => h('div', { class: 'text-left' }, 'Paid Price ($)'),
-        cell: ({ row }) => {
-            // Convert cents to dollars and format with 2 decimal places
-            const priceInDollars = (row.original.paid_price / 100).toFixed(2);
-            return h('div', { class: 'text-left font-medium' }, `$${priceInDollars}`);
-        },
+    header: () => h('div', { class: 'text-left' }, 'Paid Price ($)'),
+    cell: ({ row }) => {
+      // Convert cents to dollars and format with 2 decimal places
+      const priceInDollars = (row.original.paid_price / 100).toFixed(2);
+      return h('div', { class: 'text-left font-medium' }, `$${priceInDollars}`);
+    },
   },
 ];
 
@@ -105,22 +106,18 @@ const columns = [
 
 <template>
   <div>
+
     <Head title="Client Reservations" />
     <!-- <AppLayout :breadcrumbs="breadcrumbs"> -->
-      <div class="space-y-4">
+    <div class="space-y-4">
       <h1 class="m-4 text-2xl font-bold text-gray-800 dark:text-gray-200">Client Reservations</h1>
-      <DataTable
-        :data="props.reservations"
-        :columns="columns"
-        :pagination="props.pagination"
-        :manual-pagination="true"
+      <DataTable :data="props.reservations" :columns="columns" :pagination="props.pagination" :manual-pagination="true"
         @pagination-change="(newPagination) => {
-          router.get(route('receptionist.clientReservations'), {
+          router.get(route('admin.clientReservations'), {
             page: newPagination.pageIndex + 1,
             pageSize: newPagination.pageSize,
           });
-        }"
-      />
+        }" />
     </div>
     <!-- </AppLayout> -->
   </div>

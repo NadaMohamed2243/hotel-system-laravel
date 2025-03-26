@@ -8,7 +8,7 @@ use App\Http\Controllers\RoomController;
 
 use App\Http\Controllers\ReceptionistController;
 use App\Http\Controllers\FloorController;
-
+use App\Http\Controllers\ReservationController;
 Route::get('/', function () {
     return Inertia::render('Welcome');
 })->name('home');
@@ -45,7 +45,7 @@ Route::prefix('dashboard/receptionist')->middleware(['auth', 'verified'])->group
     Route::get('/clients/pending', [ClientController::class, 'pendingClients'])->name('receptionist.pendingClients');
     Route::get('/clients/approved', [ClientController::class, 'approvedClients'])->name('receptionist.approvedClients');
 
-    Route::get('/clients/reservations', [ClientReservationController::class, 'index'])->name('receptionist.clientReservations.index');
+    Route::get('/clients/reservations', [ClientReservationController::class, 'index'])->name('receptionist.clientReservations');
 
     Route::PATCH('/clients/{client}', [ClientController::class, 'update'])->name('receptionist.update');
     Route::delete('/clients/delete/{id}', [ClientController::class, 'delete'])->name('receptionist.unapproveClient');
@@ -139,4 +139,12 @@ Route::prefix('manager')->middleware(['auth'])->group(function () {
     });
 
 
+});
+
+
+Route::prefix('admin')->middleware(['auth', 'verified', 'permission:manage reservations'])->group(function () {
+    Route::get('/clients/reservations', [ReservationController::class, 'index'])->name('admin.clientReservations');
+});
+Route::prefix('manager')->middleware(['auth', 'verified', 'permission:manage reservations'])->group(function () {
+    Route::get('/clients/reservations', [ReservationController::class, 'index'])->name('manager.clientReservations');
 });

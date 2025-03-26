@@ -1,13 +1,16 @@
 <script setup lang="ts">
-// import AppLayout from '@/layouts/ReceptionistLayout.vue';
-import AppLayout from '@/layouts/AdminAppLayout.vue';
+// import AppLayout from '@/layouts/AdminAppLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { type BreadcrumbItem } from '@/types';
+// import { type BreadcrumbItem } from '@/types';
 import { ref, computed, h } from 'vue';
 import { router } from '@inertiajs/vue3';
 import DataTable from '@/components/DataTable.vue'; // Import the DataTable component
 import { Button } from '@/components/ui/button';
+import ClientManagement from '@/layouts/ManageClients.vue';
 
+defineOptions({
+    layout: ClientManagement,
+});
 export interface Client {
     id: number;
     user?: {
@@ -74,16 +77,16 @@ const columns = [
     },
 ];
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Receptionist Dashboard',
-        href: '/dashboard/receptionist',
-    },
-    {
-        title: 'Pending Clients',
-        href: '/dashboard/receptionist/pending-clients',
-    },
-];
+// const breadcrumbs: BreadcrumbItem[] = [
+//     {
+//         title: 'Receptionist Dashboard',
+//         href: '/dashboard/receptionist',
+//     },
+//     {
+//         title: 'Pending Clients',
+//         href: '/dashboard/receptionist/pending-clients',
+//     },
+// ];
 
 
 
@@ -134,29 +137,34 @@ const unapproveClient = async (client: Client) => {
 <template>
     <div>
 
-        <Head title="Pending Clients" />
-        <AppLayout :breadcrumbs="breadcrumbs">
-            <DataTable :data="clients" :columns="columns" :pagination="props.pagination" :manual-pagination="true"
-                @pagination-change="(newPagination) => {
-                    router.get(route('receptionist.pendingClients'), {
-                        page: newPagination.pageIndex + 1,
-                        pageSize: newPagination.pageSize,
-                    });
-                }">
-                <!-- Action Buttons Slot -->
-                <template #actions="{ row }">
-                    <div class="flex justify-center gap-2">
-                        <Button variant="outline" size="sm" @click="approveClient(row.original)"
-                            class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-700 mr-2">
-                            Approve
-                        </Button>
-                        <Button variant="outline" size="sm" @click="unapproveClient(row.original)"
-                            class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-700">
-                            Unapprove
-                        </Button>
-                    </div>
-                </template>
-            </DataTable>
-        </AppLayout>
+        <Head title="my Pending Clients" />
+        <!-- <AppLayout :breadcrumbs="breadcrumbs"> -->
+            <div class="space-y-4">
+                <h1 class="m-4 text-2xl font-bold text-gray-800 dark:text-gray-200">My Pending Clients</h1>
+                <DataTable :data="clients" :columns="columns" :pagination="props.pagination" :manual-pagination="true"
+                    @pagination-change="(newPagination) => {
+                        router.get(route('receptionist.pendingClients'), {
+                            page: newPagination.pageIndex + 1,
+                            pageSize: newPagination.pageSize,
+                        });
+                    }">
+                    <!-- Action Buttons Slot -->
+                    <template #actions="{ row }">
+                        <div class="flex justify-center gap-2">
+                            <Button variant="outline" size="sm" @click="approveClient(row.original)"
+                                class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-700 mr-2">
+                                Approve
+                            </Button>
+                            <Button variant="outline" size="sm" @click="unapproveClient(row.original)"
+                                class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-700">
+                                Unapprove
+                            </Button>
+                        </div>
+                    </template>
+                </DataTable>
+
+            </div>
+        <!-- </AppLayout> -->
+
     </div>
 </template>
