@@ -97,7 +97,6 @@
     }
   });
   
-  const emit = defineEmits(['success', 'created']);
   
   const page = usePage();
   const isAdmin = computed(() => page.props.auth.user.role === 'admin');
@@ -119,7 +118,12 @@
     }
   });
   
-  const submitForm = async () => {
+// In AddFloorDialog.vue, modify the emit definition
+const emit = defineEmits(['success', 'created', 'updated']);
+
+// Update the submitForm function
+// Update the submitForm function in AddFloorDialog.vue
+const submitForm = async () => {
   if (!form.value.name) {
     errors.value = { name: 'Floor name is required' };
     return;
@@ -137,11 +141,57 @@
 
     await router[method](url, form.value, {
       preserveScroll: true,
-      preserveState: true,
       onSuccess: (page) => {
-        if (page.props.flash?.floor) {
-          emit('created', page.props.flash.floor);
+        // Check if flash.floor exists in the response
+        const responseFloor = page.props.flash?.floor;
+        
+        if (responseFloor) {
+          const floorData = {
+            id: responseFloor.id,
+            name: responseFloor.name,
+            number: responseFloor.number,
+            manager_id: responseFloor.manager_id,
+            manager_name: responseFloor.manager_name,
+            created_at: responseFloor.created_at,
+            can_edit: responseFloor.can_edit,
+            can_delete: responseFloor.can_delete,
+            is_own_floor: responseFloor.is_own_floor
+          };
+
+          if (isEditing.value) {
+            emit('updated', floorData);
+          } else {
+            emit('created', floorData);
+          }
+        } else {
+          // If flash.floor is not available, create a basic floor object
+          // This is a fallback that will be replaced when the page refreshes
+          const fallbackFloor = {
+            id: isEditing.value ? editingId.value : Date.now(), // Temporary ID if creating
+            name: form.value.name,
+            number: 'Pending...', // Placeholder until refresh
+            manager_id: form.value.manager_id,
+            manager_name: isAdmin.value && form.value.manager_id ? 
+              props.managers.find(m => m.id === form.value.manager_id)?.name : 
+              page.props.auth.user.name,
+            created_at: new Date().toISOString(),
+            can_edit: true,
+            can_delete: true,
+            is_own_floor: true
+          };
+          
+          if (isEditing.value) {
+            emit('updated', fallbackFloor);
+          } else {
+            emit('created', fallbackFloor);
+          }
+          
+          // Since we don't have complete data, refresh the page after a short delay
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
         }
+        
         emit('success');
         closeDialog();
       },
@@ -158,7 +208,8 @@
   }
 };
 
-  
+
+
   const open = (floor = null) => {
     if (floor) {
       isEditing.value = true;

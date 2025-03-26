@@ -3,11 +3,12 @@
         <div class="flex flex-col gap-4 p-8">
             <!-- Add Dialog -->
             <AddFloorDialog 
-      ref="addFloorDialog" 
-      :managers="managers" 
-      @created="handleFloorCreated"
-      @success="handleSuccess"
-    />
+  ref="addFloorDialog" 
+  :managers="managers" 
+  @created="handleFloorCreated"
+  @updated="handleFloorUpdated"
+  @success="handleSuccess"
+/>
             <!-- View Dialog -->
             <ViewFloorDialog ref="viewDialog" :floor="selectedFloor" />
 
@@ -101,6 +102,7 @@ import ConfirmationDialog from '@/components/floors/ConfirmationDialog.vue';
 import ViewFloorDialog from '@/components/floors/ViewFloorDialog.vue';
 import AddFloorDialog from '@/components/floors/AddFloorDialog.vue';
 
+
 import {
     Table,
     TableBody,
@@ -118,13 +120,6 @@ const { props } = usePage();
 
 const floors = ref(props.floors);
 
-const handleFloorCreated = (newFloor) => {
-  // Check if the floor already exists to avoid duplicates
-  if (!floors.value.some(f => f.id === newFloor.id)) {
-    floors.value.unshift(newFloor);
-  }
-};
-
 
 
 const managers = ref(props.managers);
@@ -137,6 +132,33 @@ const confirmationDialog = ref(null);
 const selectedFloor = ref({});
 const floorToDelete = ref(null);
 
+
+
+
+// Modify handleFloorCreated to update the floors array immediately
+const handleFloorCreated = (newFloor) => {
+  // Add the new floor to the floors array with all required properties
+  floors.value.unshift({
+    ...newFloor,
+    can_edit: true,
+    can_delete: true,
+    is_own_floor: true,
+    created_at: new Date().toISOString()
+  });
+  addFloorDialog.value.close();
+};
+
+// Add a new method to handle floor updates
+const handleFloorUpdated = (updatedFloor) => {
+  const index = floors.value.findIndex(f => f.id === updatedFloor.id);
+  if (index !== -1) {
+    floors.value[index] = {
+      ...floors.value[index],
+      ...updatedFloor,
+    };
+  }
+  addFloorDialog.value.close();
+};
 
 
 const handleSuccess = () => {
@@ -152,10 +174,15 @@ const viewFloor = (floor) => {
     viewDialog.value.open();
 };
 
+
+// Update the openEditDialog function to track editing state
+const isEditing = ref(false);
+
 const openEditDialog = (floor) => {
-    if (floor.can_edit) {
-        addFloorDialog.value.open(floor);
-    }
+  if (floor.can_edit) {
+    isEditing.value = true;
+    addFloorDialog.value.open(floor);
+  }
 };
 
 const openDeleteDialog = (floor) => {
@@ -164,14 +191,12 @@ const openDeleteDialog = (floor) => {
         confirmationDialog.value.open();
     }
 };
-
 const confirmDelete = () => {
     if (floorToDelete.value) {
         const routePrefix = is_manager_view.value ? '/manager' : '/admin';
         router.delete(`${routePrefix}/floors/${floorToDelete.value.id}`, {
-            preserveScroll: true,
             onSuccess: () => {
-                floors.value = floors.value.filter(f => f.id !== floorToDelete.value.id);
+                // The page will refresh automatically
             },
             onError: (error) => {
                 console.error('Error deleting floor:', error);

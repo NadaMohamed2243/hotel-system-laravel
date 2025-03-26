@@ -27,7 +27,7 @@ class FloorController extends Controller
     // Always load all floors (remove the manager filter)
     $floors = Floor::with('manager')->get()->map(function ($floor) {
         $isOwnFloor = $floor->manager_id === Auth::id();
-        
+
         return [
             'id' => $floor->id,
             'name' => $floor->name,
@@ -58,36 +58,35 @@ class FloorController extends Controller
             'managers' => $managers
         ]);
     }
+
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|min:3|max:255',
-            'manager_id' => 'sometimes|exists:users,id'
-        ]);
-    
-        if (Auth::user()->role !== 'admin') {
-            $validated['manager_id'] = Auth::id();
-        }
-    
-        $floor = Floor::create($validated);
-        $floor->load('manager');
-    
-        // Return an Inertia response with flash data
-        return redirect()->back()->with([
-            'success' => true,
-            'floor' => [
-                'id' => $floor->id,
-                'name' => $floor->name,
-                'number' => $floor->number,
-                'created_at' => $floor->created_at->toISOString(),
-                'manager_name' => $floor->manager->name,
-                'manager_email' => $floor->manager->email,
-                'can_edit' => true,
-                'can_delete' => true,
-                'is_own_floor' => true
-            ]
-        ]);
+{
+    $validated = $request->validate([
+        'name' => 'required|string|min:3|max:255',
+        'manager_id' => 'sometimes|exists:users,id'
+    ]);
+
+    if (Auth::user()->role !== 'admin') {
+        $validated['manager_id'] = Auth::id();
     }
+
+    $floor = Floor::create($validated);
+    $floor->load('manager');
+
+    return redirect()->back()
+    ->with('success', 'Floor created successfully')
+    ->with('floor', [
+        'id' => $floor->id,
+        'name' => $floor->name,
+        'number' => $floor->number, // This will now include the auto-generated number
+        'manager_id' => $floor->manager_id,
+        'manager_name' => $floor->manager->name,
+        'created_at' => $floor->created_at->format('Y-m-d H:i:s'),
+        'can_edit' => true,
+        'can_delete' => true,
+        'is_own_floor' => true
+    ]);
+}
 
     public function show(Floor $floor)
     {
@@ -108,7 +107,7 @@ class FloorController extends Controller
     ]);
 }
 
-public function update(Request $request, Floor $floor)
+    public function update(Request $request, Floor $floor)
 {
     if (Auth::user()->role !== 'admin' && $floor->manager_id !== Auth::id()) {
         return redirect()->back()->with('error', 'You are not authorized to update this floor.');
@@ -124,30 +123,40 @@ public function update(Request $request, Floor $floor)
     }
 
     $floor->update($validated);
+    $floor->refresh();
+    $floor->load('manager');
 
-    // Redirect based on user role
-    return Auth::user()->role === 'admin'
-        ? redirect()->route('admin.floors.index')
-        : redirect()->route('manager.floors.index')
-            ->with('success', 'Floor updated successfully');
+
+    // Use the correct route name (assuming admin prefix)
+    return redirect()->back()
+        ->with('success', 'Floor updated successfully')
+        ->with('floor', [
+            'id' => $floor->id,
+            'name' => $floor->name,
+            'number' => $floor->number,
+            'manager_id' => $floor->manager_id,
+            'manager_name' => $floor->manager->name,
+            'created_at' => $floor->created_at->format('Y-m-d H:i:s'),
+            'can_edit' => true,
+            'can_delete' => true,
+            'is_own_floor' => true
+        ]);
 }
 
-public function destroy(Floor $floor)
-{
-    if (Auth::user()->role !== 'admin' && $floor->manager_id !== Auth::id()) {
-        return redirect()->back()->with('error', 'You are not authorized to delete this floor.');
-    }
 
-    if ($floor->rooms()->exists()) {
-        return redirect()->back()->with('error', 'Cannot delete floor with existing rooms.');
-    }
+    public function destroy(Floor $floor)
+    {
+        if (Auth::user()->role !== 'admin' && $floor->manager_id !== Auth::id()) {
+            return redirect()->back()->with('error', 'You are not authorized to delete this floor.');
+        }
 
-    $floor->delete();
+        if ($floor->rooms()->exists()) {
+            return redirect()->back()->with('error', 'Cannot delete floor with existing rooms.');
+        }
 
-    // Redirect based on user role
-    return Auth::user()->role === 'admin'
-        ? redirect()->route('admin.floors.index')
-        : redirect()->route('manager.floors.index')
+        $floor->delete();
+
+        return redirect()->route('floors.index')
             ->with('success', 'Floor deleted successfully');
-}
+    }
 }
