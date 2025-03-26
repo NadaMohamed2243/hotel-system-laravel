@@ -14,8 +14,14 @@ class Client extends Model
         'status',
         'mobile',
         'country',
-        'gender'
+        'gender',
+        'last_login_at'
     ];
+
+    protected $casts = [
+        'last_login_at' => 'datetime',
+    ];
+
     // Relationship with User (Client belongs to a user)
     public function user()
     {
