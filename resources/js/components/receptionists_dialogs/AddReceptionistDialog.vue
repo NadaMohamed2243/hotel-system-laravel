@@ -79,6 +79,19 @@
             </div>
 
             <div>
+            <Label for="national_id">National ID</Label>
+            <Input
+                id="national_id"
+                v-model="form.national_id"
+                placeholder="1234567890"
+                autocomplete="off"
+            />
+            <p v-if="errors.national_id" class="text-sm text-red-500 mt-1">
+                {{ errors.national_id }}
+            </p>
+            </div>
+
+            <div>
               <Label for="email">Email</Label>
               <Input
                 id="email"
@@ -92,14 +105,6 @@
               </p>
             </div>
 
-            <div>
-              <Label for="national_id">National ID</Label>
-              <Input
-                id="national_id"
-                v-model="form.national_id"
-                placeholder="1234567890"
-              />
-            </div>
 
             <div class="grid grid-cols-2 gap-4">
               <div>
@@ -208,7 +213,10 @@ const submitForm = () => {
   formData.append('password_confirmation', form.password_confirmation);
   formData.append('manager_id', form.manager_id);
   if (form.avatar) {
-    formData.append('avatar', form.avatar);
+    formData.append('avatar_image', form.avatar);
+  }
+  if (form.national_id) {
+    formData.append('national_id', form.national_id);
   }
 
   // Optimistically create temporary receptionist
@@ -252,6 +260,9 @@ const submitForm = () => {
       // Emit to remove the temporary receptionist
       emit('receptionistRemoved', tempReceptionist.id);
       errors.value = err;
+      if (err.national_id) {
+        errors.value.national_id = err.national_id;
+      }
     },
     onFinish: () => {
       isSubmitting.value = false;

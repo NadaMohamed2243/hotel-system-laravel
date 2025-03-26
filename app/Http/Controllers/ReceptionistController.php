@@ -28,70 +28,65 @@ class ReceptionistController extends Controller
 
 
 
-    public function destroy(Receptionist $receptionist)
-    {
-        if (Auth::user()->role === 'manager' && $receptionist->manager_id !== Auth::id()) {
-            return redirect()->back()->with('error', 'You are not authorized to delete this receptionist.');
-        }
 
-        $receptionist->delete();
-        return redirect()->back()->with('success', 'Receptionist deleted successfully.');
-    }
 
     public function index()
-    {
-        // Check permissions
-        try {
-            if (!auth()->user()->hasPermissionTo('manage receptionists')) {
-                return abort(403, 'You do not have permission to view receptionists.');
-            }
-        } catch (\Exception $e) {
-            Log::warning('Permission check failed: ' . $e->getMessage());
-            if (auth()->user()->role !== 'admin' && auth()->user()->role !== 'manager') {
-                return abort(403, 'Unauthorized action.');
-            }
+{
+    // Check permissions
+    try {
+        if (!auth()->user()->hasPermissionTo('manage receptionists')) {
+            return abort(403, 'You do not have permission to view receptionists.');
         }
-
-        // Determine if this is a manager route
-        $isManagerRoute = request()->is('manager/receptionists*');
-
-        // Base query
-        $query = Receptionist::with(['user', 'manager']);
-
-        // Filter by manager if not admin or if on manager route
-        if (auth()->user()->role === 'manager' || $isManagerRoute) {
-            $query->where('manager_id', auth()->id());
+    } catch (\Exception $e) {
+        Log::warning('Permission check failed: ' . $e->getMessage());
+        if (auth()->user()->role !== 'admin' && auth()->user()->role !== 'manager') {
+            return abort(403, 'Unauthorized action.');
         }
-
-        // Get receptionists with only needed data
-        $receptionists = $query->get()->map(function ($receptionist) use ($isManagerRoute) {
-            return [
-                'id' => $receptionist->id,
-                'is_banned' => $receptionist->is_banned,
-                'created_at' => $receptionist->created_at->format('Y-m-d H:i:s'),
-                'name' => $receptionist->user->name,
-                'email' => $receptionist->user->email,
-                'national_id' => $receptionist->user->national_id,
-                'avatar' => $receptionist->avatar_image
-                    ? asset('storage/' . $receptionist->avatar_image)
-                    : null,
-                // Only include manager info if not manager route
-                'manager_name' => $isManagerRoute ? null : $receptionist->manager->name,
-                'manager_email' => $isManagerRoute ? null : $receptionist->manager->email,
-            ];
-        });
-
-        // Only get managers list if not manager route
-        $managers = $isManagerRoute
-            ? []
-            : User::where('role', 'manager')->get(['id', 'name', 'email']);
-
-        return Inertia::render('Receptionists/Index', [
-            'receptionists' => $receptionists,
-            'managers' => $managers,
-            'isManagerView' => $isManagerRoute // Pass this to the frontend
-        ]);
     }
+
+    // Determine if this is a manager route
+    $isManagerRoute = request()->is('manager/receptionists*');
+
+    // Base query - show all receptionists
+    $query = Receptionist::with(['user', 'manager']);
+
+    $receptionists = $query->get()->map(function ($receptionist) {
+        $avatarUrl = null;
+        if ($receptionist->user->avatar_image) {
+            $avatarUrl = asset('storage/' . $receptionist->user->avatar_image);
+        }
+
+        return [
+            'id' => $receptionist->id,
+            'is_banned' => $receptionist->is_banned,
+            'created_at' => $receptionist->created_at->format('Y-m-d H:i:s'),
+            'name' => $receptionist->user->name,
+            'email' => $receptionist->user->email,
+            'national_id' => $receptionist->user->national_id,
+            'avatar_image' => $avatarUrl,
+            'manager_name' => $receptionist->manager->name ?? null,
+            'manager_email' => $receptionist->manager->email ?? null,
+            'manager_id' => $receptionist->manager_id, // Add manager_id for permission checks
+            'can_edit' => auth()->user()->role === 'admin' ||
+                         (auth()->user()->role === 'manager' && $receptionist->manager_id === auth()->id()),
+            'can_ban' => auth()->user()->role === 'admin' ||
+                        (auth()->user()->role === 'manager' && $receptionist->manager_id === auth()->id()),
+            'can_delete' => auth()->user()->role === 'admin' // Only admin can delete
+        ];
+    });
+
+    // Only get managers list if not manager route
+    $managers = $isManagerRoute
+        ? []
+        : User::where('role', 'manager')->get(['id', 'name', 'email']);
+
+    return Inertia::render('Receptionists/Index', [
+        'receptionists' => $receptionists,
+        'managers' => $managers,
+        'isManagerView' => $isManagerRoute,
+        'currentManagerId' => auth()->id() // Pass current manager ID to frontend
+    ]);
+}
 
     public function show(Receptionist $receptionist)
     {
@@ -106,10 +101,12 @@ class ReceptionistController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
-            'national_id' => 'nullable|string|max:255',
+            'national_id' => 'nullable|string|max:255|unique:users,national_id',
             'password' => 'required|string|min:8|confirmed',
             'avatar_image' => 'nullable|image|max:2048',
             'manager_id' => 'required|exists:users,id'
+        ], [
+            'national_id.unique' => 'This national ID is already registered in our system',
         ]);
 
         // Handle avatar upload
@@ -155,10 +152,11 @@ class ReceptionistController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email,'.$receptionist->user_id,
-            'national_id' => 'nullable|string|max:255',
+            'national_id' => 'nullable|string|max:255|unique:users,national_id,'.$receptionist->user_id,
             'manager_id' => 'required|exists:users,id',
             'is_banned' => 'boolean',
-            'avatar' => 'nullable|image|max:2048'
+            'avatar_image' => 'nullable|image|max:2048'
+
         ]);
 
         // Update user
@@ -169,10 +167,16 @@ class ReceptionistController extends Controller
         ]);
 
         // Update avatar if provided
-        if ($request->hasFile('avatar')) {
-            $path = $request->file('avatar')->store('avatars', 'public');
+        if ($request->hasFile('avatar_image')) {
+            // Delete old avatar if exists
+            if ($receptionist->user->avatar_image) {
+                Storage::disk('public')->delete($receptionist->user->avatar_image);
+            }
+
+            $path = $request->file('avatar_image')->store('avatars', 'public');
             $receptionist->user->update(['avatar_image' => $path]);
         }
+
 
         // Update receptionist
         $receptionist->update([
@@ -182,6 +186,38 @@ class ReceptionistController extends Controller
 
         return redirect()->back()->with('success', 'Receptionist updated successfully');
     }
+
+
+    public function destroy(Receptionist $receptionist)
+    {
+        try {
+            // Check authorization
+            if (Auth::user()->role === 'manager' && $receptionist->manager_id !== Auth::id()) {
+                return redirect()->back()->with('error', 'You are not authorized to delete this receptionist.');
+            }
+
+            // Get the user first
+            $user = $receptionist->user;
+
+            // Delete the receptionist record
+            $receptionist->delete();
+
+            // Delete the associated user
+            if ($user) {
+                // Delete avatar if exists
+                if ($user->avatar_image) {
+                    Storage::disk('public')->delete($user->avatar_image);
+                }
+                $user->delete();
+            }
+
+            return redirect()->back()->with('success', 'Receptionist and associated user deleted successfully.');
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Failed to delete receptionist: ' . $e->getMessage());
+        }
+    }
+
 
     public function ban(Receptionist $receptionist)
     {
