@@ -8,15 +8,29 @@
                     <th class="border p-2">Room Number</th>
                     <th class="border p-2">Accompanying People</th>
                     <th class="border p-2">Paid Price</th>
+                    <th class="border p-2">Actions</th>
                 </tr>
             </thead>
-            <tbody>
-                <tr v-for="reservation in reservations" :key="reservation.id" class="text-center">
-                    <td class="border p-2">{{ reservation.room_number }}</td>
-                    <td class="border p-2">{{ reservation.accompany_number }}</td>
-                    <td class="border p-2">${{ (reservation.paid_price / 100).toFixed(2) }}</td>
-                </tr>
-            </tbody>
+            <tbody v-if="reservations.length > 0">
+    <tr v-for="reservation in reservations" :key="reservation.id" class="text-center">
+        <td class="border p-2">{{ reservation.room_id }}</td>
+        <td class="border p-2">{{ reservation.accompany_number }}</td>
+        <td class="border p-2">${{ (reservation.paid_price / 100).toFixed(2) }}</td>
+        <td class="border p-2">
+                        <button 
+                            class="bg-red-500 text-white px-4 py-2 rounded" 
+                            @click="cancelReservation(reservation.id)">
+                            Cancel
+                        </button>
+        </td>
+    </tr>
+</tbody>
+<tbody v-else>
+    <tr>
+        <td colspan="3" class="text-center p-4">No reservations available.</td>
+    </tr>
+</tbody>
+
         </table>
     </div>
 </template>
@@ -24,14 +38,38 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import { router } from '@inertiajs/vue3';
+import { toRaw } from 'vue';
 
 const reservations = ref([]);
 
 onMounted(() => {
-    router.get('/api/my-reservations', {}, {
+    router.get('/client/my-reservations', {}, {
         onSuccess: (response) => {
-            reservations.value = response.props.reservations;
+            const rawReservations = toRaw(response.props.reservations);
+            console.log('Raw Reservations:', rawReservations);
+            reservations.value = rawReservations;
+        },
+        onError: (error) => {
+            console.error('Error fetching reservations:', error);
         }
     });
 });
+
+
+
+// Function to cancel the reservation
+const cancelReservation = (id) => {
+    router.post('/client/cancel-reservation', { id }, {
+        onSuccess: (response) => {
+            console.log('Reservation canceled:', response);
+            alert(response.message); 
+            fetchReservations(); 
+        },
+        onError: (error) => {
+            console.error('Error canceling reservation:', error);
+            alert('Error canceling reservation!');
+        }
+    });
+};
+
 </script>

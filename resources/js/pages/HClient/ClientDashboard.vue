@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import ClientSidebar from '@/components/ClientSidebar.vue';
+import { computed } from 'vue';
+
+
+const page = computed(() => usePage().props.component);
 
 const breadcrumbs: BreadcrumbItem[] = [
     {

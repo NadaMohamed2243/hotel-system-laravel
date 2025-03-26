@@ -85,7 +85,7 @@ Route::get('/pending-approval', function () {
 })->name('pending.approval')->middleware('auth');
 
 
-// Client dashboard - only accessible by clients
+//Client dashboard - only accessible by clients
 Route::get('/dashboard', function () {
     $user = Auth::user();
     $user->load('client');
@@ -99,16 +99,45 @@ Route::get('/dashboard', function () {
 
 
 
-// Client reservations
-Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/my-reservations', [ReservationController::class, 'myReservations']);
-});
+
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    Route::get('/client/reservations', function () {
-        return Inertia::render('HClient/MyReservations');
-    })->name('client.reservations');
+    
+    // Show available rooms for reservation
+    Route::get('/client/make-reservation', [ReservationController::class, 'showAvailableRooms'])
+        ->name('client.makeReservation');
+
+    // Show reservation form for a specific room
+    Route::get('/client/make-reservation/{roomId}', [ReservationController::class, 'showReservationForm'])
+        ->name('client.showReservationForm');
+
+    // Store reservation
+    Route::post('/client/reserve', [ReservationController::class, 'storeReservation'])
+        ->name('client.reserve');
+
+    // Cancel reservation
+    Route::post('/client/cancel-reservation', [ReservationController::class, 'cancelReservation'])
+        ->name('client.cancelReservation');
+
+    // Show client's reservations
+    Route::get('/client/my-reservations', [ReservationController::class, 'myReservations'])
+        ->name('client.reservations');
+
+    Route::get('/client/make-reservation/{roomId}/payment', [ReservationController::class, 'showPaymentForm'])
+    ->name('client.payment');
+
+    Route::post('/client/payment/{roomId}', [ReservationController::class, 'processPayment']);
+
+    
+        Route::prefix('client')->middleware('auth')->group(function() {
+            // 
+            Route::post('/create-payment-intent', [ReservationController::class, 'createPaymentIntent'])->name('client.createPaymentIntent');
+        });
+        
 });
+
+
+
 
 
 

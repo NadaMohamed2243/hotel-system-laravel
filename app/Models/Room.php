@@ -14,9 +14,12 @@ class Room extends Model
         'price',
         // 'floor_id',
         'manager_id',
-        'is_reserved'
+        'is_reserved',
     ];
 
+    protected $casts = [
+        'is_reserved' => 'boolean', // Cast to boolean
+    ];
     // public function floor()
     // {
     //     return $this->belongsTo(Floor::class);
