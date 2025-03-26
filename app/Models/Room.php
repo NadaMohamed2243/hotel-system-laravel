@@ -2,7 +2,7 @@
 
 namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-// use app\Models\Floor;
+use app\Models\Floor;
 use app\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
@@ -12,15 +12,25 @@ class Room extends Model
         'number',
         'capacity',
         'price',
-        // 'floor_id',
+        'floor_id',
         'manager_id',
-        'is_reserved'
+        'is_reserved',
     ];
 
+
+    protected $casts = [
+        'is_reserved' => 'boolean', // Cast to boolean
+    ];
     // public function floor()
     // {
     //     return $this->belongsTo(Floor::class);
     // }
+
+    public function floor()
+    {
+        return $this->belongsTo(Floor::class);
+    }
+
 
     public function manager()
     {

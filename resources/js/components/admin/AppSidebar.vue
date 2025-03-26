@@ -13,6 +13,15 @@ import AppLogo from '../AppLogo.vue';
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const can = computed(() => page.props.auth.can || {});
+let roleRoute='';
+// console.log(user.value.role);
+if(user.value.role==='manager'){
+    roleRoute="/manager";
+}
+else if(user.value.role==='admin'){
+    roleRoute="/admin";
+}
+// console.log(`${role}/floors`);
 const role = computed(() => user.value?.role); // Get user role
 console.log(role.value);
 
@@ -88,6 +97,11 @@ const mainNavItems = computed(() => {
     if (can.value.approve_client || can.value.view_approved_clients || can.value.view_client_reservations) {
         items.push({
             title: 'Manage Clients',
+            href: `${roleRoute}/clients`,
+            icon: Users,
+        });
+        items.push({
+            title: 'Manage Pending Clients',
             href: '/dashboard/receptionist/clients/pending',
             icon: Users,
         });
@@ -114,15 +128,15 @@ const mainNavItems = computed(() => {
     if (can.value.manage_rooms) {
         items.push({
             title: 'Manage Rooms',
-            href: '/admin/rooms',
+            href: `${roleRoute}/rooms`,
             icon: Home,
         });
     }
 
-    if (can.value.view_reservations || can.value.view_client_reservations) {
+    if (can.value.view_reservations || can.value.manage_reservations) {
         items.push({
             title: 'Reservations',
-            href: '/admin/reservations',
+            href: '/admin/clients/reservations',
             icon: Calendar,
         });
     }

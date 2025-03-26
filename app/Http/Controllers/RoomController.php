@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use App\Models\Room;
 use App\Models\User;
+use App\Models\Floor;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
@@ -13,8 +14,9 @@ class RoomController extends Controller
 {
     public function index()
     {
-        $user= auth()->user();
+        $user = auth()->user();
         $this->reset_custom_id();
+
         //retrieving data
         $rooms = Room::with('manager')->get()
             ->map(function ($room)use($user) {
@@ -24,40 +26,44 @@ class RoomController extends Controller
                     'number' => $room->number,
                     'capacity' => $room->capacity,
                     'price' => $room->price_in_dollars, // Convert to dollars
-                    // 'floor' => $room->floor->name,
+                    'floor' => $room->floor->name,
                     'manager' => ($user->role === 'admin' && $room->manager) ? $room->manager->name : 'Admin',
                     'canEdit' => $user->role === 'admin' || $room->manager_id === $user->id
                 ];
             });
-
+            $floors=Floor::all();
             $managers = User::where('role', 'manager')->get();
 
             return Inertia::render('Rooms/Index', [
             'rooms' => $rooms,
             'managers'=>$managers,
+            'floors'=>$floors,
             'role'=>$user->role
         ]);
     }
 
     public function store(Request $request)
     {
-        $user = auth()->user();
+    $user = auth()->user();
     // Validate input data
     $validatedData = $request->validate([
-        'number' => ['required', 'string', 'digits_between:4,10', 'unique:rooms,number'],
+        // 'number' => ['required', 'string', 'digits_between:4,10', 'unique:rooms,number'],
         'capacity' => ['required', 'integer','min:1'],
         'price' => ['required', 'numeric'],
     ]);
-
+    $lastRoom = Room::where('floor_id', $request->floor_id)->latest('number')->first();
+    $newRoomNumber = $lastRoom ? $lastRoom->number + 1 : ($request->floor_id * 1000 + 1);
     //Convert price to cent
     $validatedData['price'] = (int) ($validatedData['price'] * 100);
+    $validatedData['floor_id']=$request->floor_id;
+    $validatedData['number']=$newRoomNumber;
     // Automatically assign manager_id if user is a manager
     $validatedData['manager_id'] = $user->role === 'manager' ? $user->id : ($request->manager_id ?? null);
     $this->reset_custom_id();
 
     // Store the room
     Room::create($validatedData);
-    return redirect()->route('rooms.index');
+    return redirect()->back();
     }
 
     public function update(Request $request,Room $room){
@@ -69,10 +75,10 @@ class RoomController extends Controller
 
          //Convert price to cent
         $validatedData['price'] = (int) ($validatedData['price'] * 100);
-
+        $validatedData['floor_id']=$request->floor_id;
         $room->update($validatedData);
 
-        return redirect()->route('rooms.index')->with('success', 'Room updated successfully.');
+        return redirect()->back();
     }
 
     public function destroy($id){
@@ -80,10 +86,10 @@ class RoomController extends Controller
         if ($room && $room->is_reserved == 0){
             $room->delete();
             $this->reset_custom_id();
-            return redirect()->route('rooms.index');
+            return redirect()->back();
         }
         else{
-            return redirect()->route('rooms.index')->with('error', 'Room is reserved.');
+            return redirect()->back()->with('error', 'Room is reserved.');
         }
     }
     //to update the order of showing id
