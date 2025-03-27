@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('rooms', function (Blueprint $table) {
-            $table->foreignId('floor_id')->constrained('floors')->onDelete('restrict');
+        Schema::table('clients', function (Blueprint $table) {
+            $table->timestamp('last_login_at')->nullable()->after('gender');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Schema::table('rooms', function (Blueprint $table) {
-        //     //
-        // });
+        Schema::table('clients', function (Blueprint $table) {
+            $table->dropColumn('last_login_at');
+        });
     }
 };

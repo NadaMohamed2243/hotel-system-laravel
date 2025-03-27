@@ -18,7 +18,6 @@ return new class extends Migration
             $table->integer('price');
             $table->foreignId('manager_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->timestamps();
-            
         });
     }
 

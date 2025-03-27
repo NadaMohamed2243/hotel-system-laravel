@@ -32,3 +32,5 @@ class Reservation extends Model
          return number_format($this->paid_price / 100, 2);
      }
 }
+
+// reservation model

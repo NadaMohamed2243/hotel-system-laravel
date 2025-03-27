@@ -39,8 +39,7 @@ import { Head, Link } from '@inertiajs/vue3';
                         <p class="mb-2 text-[#706f6c] dark:text-[#A1A09A]">
                             Experience seamless hotel management with our modern and intuitive system. Designed to enhance efficiency and convenience, our platform ensures smooth operations for hotel staff and an effortless booking experience for guests.
                         </p>
-
-                         <ul class="mb-1 flex flex-col lg:mb-1">
+                        <ul class="mb-1 flex flex-col lg:mb-1">
                             <h2 class="mt-4 mb-3 text-[16px]">Key Features</h2>
                             <li
                                 class="relative flex text-red-500 items-center gap-4 py-2 before:absolute before:bottom-0 before:left-[0.4rem] before:top-1/2 before:border-l before:border-[#e3e3e0] dark:before:border-[#3E3E3A]">

@@ -11,27 +11,20 @@ use Inertia\Inertia;
 
 class FloorController extends Controller
 {
-    public function index()
+
+    public function index(Request $request)
     {
-        try {
-            if (!auth()->user()->hasPermissionTo('manage floors')) {
-                return abort(403, 'You do not have permission to view floors.');
-            }
-        } catch (\Exception $e) {
-            Log::warning('Permission check failed: ' . $e->getMessage());
-            if (auth()->user()->role !== 'admin' && auth()->user()->role !== 'manager') {
-                return abort(403, 'Unauthorized action.');
-            }
-        }
+        $page = $request->input('page', 1);
+        $pageSize = $request->input('pageSize', 10);
 
-        // Fetch floors with relationships
-        $query = Floor::with('manager');
+        $floorsQuery = Floor::with('manager');
+            
+        
+        $paginatedFloors = $floorsQuery->paginate($pageSize);
+        
+        $floors = $paginatedFloors->map(function ($floor) {
+            $isOwnFloor = $floor->manager_id === Auth::id();
 
-        if (Auth::user()->role !== 'admin') {
-            $query->where('manager_id', Auth::id());
-        }
-
-        $floors = $query->get()->map(function ($floor) {
             return [
                 'id' => $floor->id,
                 'name' => $floor->name,
@@ -39,19 +32,28 @@ class FloorController extends Controller
                 'created_at' => $floor->created_at->format('Y-m-d H:i:s'),
                 'manager_name' => $floor->manager->name,
                 'manager_email' => $floor->manager->email,
-                'can_edit' => Auth::user()->role === 'admin' || $floor->manager_id === Auth::id(),
-                'can_delete' => Auth::user()->role === 'admin' || $floor->manager_id === Auth::id(),
+                'manager_id' => $floor->manager_id,
+                'can_edit' => Auth::user()->role === 'admin' || $isOwnFloor,
+                'can_delete' => Auth::user()->role === 'admin' || $isOwnFloor,
+                'is_own_floor' => $isOwnFloor,
             ];
         });
 
-        $managers = User::where('role', 'manager')
-            ->select('id', 'name', 'email')
-            ->get();
-
         return Inertia::render('Floors/Index', [
-            'floors' => $floors,
-            'managers' => $managers,
-            'canCreate' => auth()->user()->can('create', Floor::class),
+            'floors' => [
+                'data' => $floors,
+                'meta' => [
+                    'total' => $paginatedFloors->total(),
+                    'pageCount' => $paginatedFloors->lastPage(),
+                    'pageSize' => $paginatedFloors->perPage(),
+                    'pageIndex' => $paginatedFloors->currentPage() - 1, // 0-based for TanStack Table
+                    'from' => $paginatedFloors->firstItem(),
+                    'to' => $paginatedFloors->lastItem(),
+                ]
+            ],
+            'managers' => User::where('role', 'manager')->get(['id', 'name', 'email']),
+            'canCreate' => true,
+            'is_manager_view' => Auth::user()->role === 'manager',
         ]);
     }
 
@@ -66,6 +68,7 @@ class FloorController extends Controller
         ]);
     }
 
+
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -73,73 +76,97 @@ class FloorController extends Controller
             'manager_id' => 'sometimes|exists:users,id'
         ]);
 
-        // Set manager_id to current user if not admin
         if (Auth::user()->role !== 'admin') {
             $validated['manager_id'] = Auth::id();
         }
 
         $floor = Floor::create($validated);
+        $floor->load('manager');
 
-        return Inertia::render('Floors/Index', [
-            'floors' => Floor::all()
-        ]);
+        return redirect()->back()
+            ->with('success', 'Floor created successfully')
+            ->with('floor', [
+                'id' => $floor->id,
+                'name' => $floor->name,
+                'number' => $floor->number,
+                'manager_id' => $floor->manager_id,
+                'manager_name' => $floor->manager->name,
+                'created_at' => $floor->created_at->format('Y-m-d H:i:s'),
+                'can_edit' => true,
+                'can_delete' => true,
+                'is_own_floor' => true
+            ]);
     }
+
 
     public function show(Floor $floor)
     {
+        
         return Inertia::render('Floors/Show', [
             'floor' => $floor->load('manager'),
         ]);
     }
 
     public function edit(Floor $floor)
-{
-    if (Auth::user()->role !== 'admin' && $floor->manager_id !== Auth::id()) {
-        return redirect()->back()->with('error', 'You are not authorized to edit this floor.');
+    {
+        if (Auth::user()->role === 'manager' && $floor->manager_id !== Auth::id()) {
+            return redirect()->back()->with('error', 'You are not authorized to edit this floor.');
+        }
+
+        return Inertia::render('Floors/Edit', [
+            'floor' => $floor->load('manager'),
+            'managers' => User::where('role', 'manager')->get(['id', 'name', 'email'])
+        ]);
     }
 
-    return Inertia::render('Floors/Edit', [
-        'floor' => $floor->load('manager'),
-        'managers' => User::where('role', 'manager')->get(['id', 'name', 'email'])
-    ]);
-}
 
     public function update(Request $request, Floor $floor)
-{
-    if (Auth::user()->role !== 'admin' && $floor->manager_id !== Auth::id()) {
-        return redirect()->back()->with('error', 'You are not authorized to update this floor.');
+    {
+        if (Auth::user()->role === 'manager' && $floor->manager_id !== Auth::id()) {
+            return redirect()->back()->with('error', 'You are not authorized to update this floor.');
+        }
+
+        $validated = $request->validate([
+            'name' => 'required|string|min:3|max:255',
+            'manager_id' => 'sometimes|exists:users,id'
+        ]);
+
+        // Managers cannot change the floor manager
+        if (Auth::user()->role !== 'admin') {
+            unset($validated['manager_id']);
+        }
+
+        $floor->update($validated);
+        $floor->refresh();
+        $floor->load('manager');
+
+        return redirect()->back()
+            ->with('success', 'Floor updated successfully')
+            ->with('floor', [
+                'id' => $floor->id,
+                'name' => $floor->name,
+                'number' => $floor->number,
+                'manager_id' => $floor->manager_id,
+                'manager_name' => $floor->manager->name,
+                'created_at' => $floor->created_at->format('Y-m-d H:i:s'),
+                'can_edit' => true,
+                'can_delete' => true,
+                'is_own_floor' => true
+            ]);
     }
-
-    $validated = $request->validate([
-        'name' => 'required|string|min:3|max:255',
-        'manager_id' => 'sometimes|exists:users,id'
-    ]);
-
-    if (Auth::user()->role !== 'admin') {
-        unset($validated['manager_id']);
-    }
-
-    $floor->update($validated);
-
-    // Use the correct route name (assuming admin prefix)
-    return redirect()->route('admin.floors.index')
-        ->with('success', 'Floor updated successfully');
-}
-
 
     public function destroy(Floor $floor)
     {
-        if (Auth::user()->role !== 'admin' && $floor->manager_id !== Auth::id()) {
-            return redirect()->back()->with('error', 'You are not authorized to delete this floor.');
-        }
-
+       
         if ($floor->rooms()->exists()) {
             return redirect()->back()->with('error', 'Cannot delete floor with existing rooms.');
         }
 
         $floor->delete();
 
-        return redirect()->route('floors.index')
+        $routeName = Auth::user()->role === 'admin' ? 'admin.floors.index' : 'manager.floors.index';
+
+        return redirect()->route($routeName)
             ->with('success', 'Floor deleted successfully');
     }
 }

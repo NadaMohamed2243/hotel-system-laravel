@@ -14,13 +14,23 @@ class Room extends Model
         'price',
         'floor_id',
         'manager_id',
-        'is_reserved'
+        'is_reserved',
     ];
+
+
+    protected $casts = [
+        'is_reserved' => 'boolean', // Cast to boolean
+    ];
+    // public function floor()
+    // {
+    //     return $this->belongsTo(Floor::class);
+    // }
 
     public function floor()
     {
         return $this->belongsTo(Floor::class);
     }
+
 
     public function manager()
     {
@@ -29,7 +39,7 @@ class Room extends Model
 
     public function getPriceInDollarsAttribute()
     {
-        return number_format($this->price / 100, 2);
+        return number_format($this->price / 100, 1);
     }
 
     public function reservations()
