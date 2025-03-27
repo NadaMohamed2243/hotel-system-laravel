@@ -19,7 +19,7 @@ class RoomController extends Controller
         $this->reset_custom_id();
 
         //retrieving data
-        $rooms = Room::with('manager')->paginate(10) // Use pagination instead of get()
+        $rooms = Room::with('manager')->paginate(7)
         ->through(function ($room)use($user) {
                 return [
                     'id' => $room->id,
@@ -49,7 +49,6 @@ class RoomController extends Controller
     $user = auth()->user();
     // Validate input data
     $validatedData = $request->validate([
-        // 'number' => ['required', 'string', 'digits_between:4,10', 'unique:rooms,number'],
         'capacity' => ['required', 'integer','min:1'],
         'price' => ['required', 'numeric'],
         'floor_id'=>['required']

@@ -21,8 +21,8 @@ class ClientController extends Controller
 
         $clients = User::where('role', 'client')
         ->with('client')
-        ->get()
-        ->map(function ($user) {
+        ->paginate(7)
+        ->through(function ($user) {
             return [
                 'id' => $user->id,
                 'custom_id' => $user->custom_id,
@@ -55,11 +55,10 @@ class ClientController extends Controller
         public function store(Request $request)
         {
             $validated = $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:users,email',
+                'name' => 'required',
+                'email' => 'required',
                 'country' => 'required|string|max:100',
-                'phone' => 'required|string|min:7|max:15',
-                'country' => 'string',
+                'phone' => 'required',
                 'approved_by' => 'string',
                 'avatar' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
             ]);

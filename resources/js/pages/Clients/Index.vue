@@ -11,12 +11,12 @@ import { Eye, Loader2, Pencil, Trash } from 'lucide-vue-next';
 import { ref } from 'vue';
 
 const props = defineProps({
-    clients: Array,
+    clients: Object,
     role: String,
     loginUser:Number,
 });
 
-const clients = ref(props.clients);
+const clients = ref(props.clients?.data?? []);
 const showClientDialog = ref(false);
 const showDeleteDialog = ref(false);
 const isSubmitting = ref(false);
@@ -39,7 +39,7 @@ if (props.role === 'admin') {
     route = '/manager';
     login_id=props.loginUser;
 }
-console.log(props.clients.loginName);
+
 const form = ref({
     name: '',
     email: '',
@@ -51,7 +51,6 @@ const form = ref({
     approved_by: login_id,
     avatar: null,
 });
-console.log(form.value);
 
 const resetForm = () => {
     form.value = {
@@ -155,7 +154,7 @@ const submitClient = () => {
         preserveScroll: true,
         onSuccess: (page) => {
             showClientDialog.value = false;
-            clients.value = page.props.clients || clients.value;
+            clients.value = page.props.clients.data || clients.value;
         },
         onError: (formErrors) => {
             errors.value = formErrors;
@@ -174,12 +173,15 @@ const confirmDelete = () => {
         onSuccess: (page) => {
             showDeleteDialog.value = false;
             console.log('sucsess');
-            clients.value = page.props.clients || clients.value;
+            clients.value = page.props.clients.data  || clients.value.data ;
         },
         onFinish: () => {
             isSubmitting.value = false;
         },
     });
+};
+const goToPage = (url) => {
+    if (url) router.visit(url);
 };
 </script>
 
@@ -214,7 +216,7 @@ const confirmDelete = () => {
                                 <TableCell>{{ client.phone }}</TableCell>
                                 <TableCell>{{ client.country }}</TableCell>
                                 <TableCell>{{ client.gender }}</TableCell>
-                                <TableCell>{{ client.status }}</TableCell>
+                                <TableCell><span  class="rounded-full bg-sky-500/75 px-2 py-1">{{ client.status }}</span></TableCell>
                                 <TableCell>{{ client.approved_by }}</TableCell>
                                 <TableCell class="text-center">
                                     <div class="flex justify-center gap-2">
@@ -241,7 +243,16 @@ const confirmDelete = () => {
                 </CardContent>
             </Card>
         </div>
-
+        <!-- Pagination -->
+        <div class="flex justify-center mt-4">
+            <button v-for="(link, index) in (props.clients?.links || [])" :key="index"
+                :disabled="!link.url"
+                @click="goToPage(link.url)"
+                v-html="link.label"
+                class="mx-1 px-4 py-2 border rounded hover:bg-blue-500"
+                :class="{ 'bg-blue-500 text-white': link.active, 'cursor-not-allowed text-gray-300 hover:bg-transparent ': !link.url }">
+            </button>
+        </div>
         <!-- Create Client Dialog -->
         <Dialog v-model:open="showClientDialog">
             <DialogContent>

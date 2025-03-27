@@ -8,11 +8,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import {Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Inertia } from '@inertiajs/inertia';
 import { Pencil, Trash, Loader2 ,Eye} from 'lucide-vue-next';
-import { defaultDocument } from '@vueuse/core';
 import { computed } from 'vue';
-// import { router } from '@inertiajs/vue3';
 
 const route = computed(() => (props.role === 'admin' ? '/admin' : '/manager'));
 
@@ -24,7 +21,6 @@ const props = defineProps({
 });
 
 const rooms = ref(props.rooms?.data ?? []);
-// console.log(rooms.value.data);
 const showRoomDialog = ref(false);
 const showDeleteDialog = ref(false);
 const isSubmitting = ref(false);
@@ -59,10 +55,7 @@ const openEditDialog = (room) => {
     resetForm();
     isEditing.value = true;
     editingRoomId.value = room.id;
-    // console.log("editingRoomId.value:", room.id); // Debugging
     form.value = { ...room };
-    console.log(form.value);
-    // console.log(form.value);
     showRoomDialog.value = true;
 };
 const openShowDialog = (room) => {
@@ -92,10 +85,8 @@ const confirmDelete = () => {
 const submitRoom = () => {
     isSubmitting.value = true;
     errors.value = {}; // Clear previous errors
-    // console.log(editingRoomId.value);
     const url = isEditing.value ? `${route.value}/rooms/${editingRoomId.value}` : `${route.value}/rooms`;
     const method = isEditing.value ? 'put' : 'post';
-    console.log(form.value.number);
     router[method](url, form.value, {
         preserveScroll: true,
         onSuccess: (page) => {
@@ -103,7 +94,6 @@ const submitRoom = () => {
             rooms.value = page.props.rooms.data|| rooms.value; // Update rooms without reload
         },
         onError: (formErrors) => {
-            console.log("Validation Errors:", formErrors); // Debugging
             errors.value = formErrors; // Capture validation errors
         },
         onFinish: () => {
@@ -139,7 +129,6 @@ const goToPage = (url) => {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <!-- <pre>{{ rooms }}</pre> -->
                             <TableRow v-for="room in rooms" :key="room?.id">
                                 <TableCell class="font-medium">{{ room.custom_id }}</TableCell>
                                 <TableCell class="font-medium">{{ room.floor }}</TableCell>
