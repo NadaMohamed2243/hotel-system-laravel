@@ -32,7 +32,10 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'country' => 'required|string|max:255',
             'gender' => 'required|in:Male,Female',
+            'mobile' => 'required|string|max:20',
         ]);
+        //dd($request->mobile);
+
 
         $user = User::create([
             'name' => $request->name,
@@ -40,13 +43,15 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
             'country' => $request->country,
             'gender' => $request->gender,
+            'mobile' => $request->mobile,
         ]);
 
+        //store data in client table
         Client::create([
             'user_id' => $user->id,
             'country' => $request->country,
             'gender' => $request->gender,
-            // 'approved' => false, // Pending
+            'mobile' => $request->mobile,
             'status' => 'pending', // Pending
         ]);
 
