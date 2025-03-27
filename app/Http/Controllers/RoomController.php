@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rules;
 use App\Http\Requests\Rooms\StoreRoomRequest;
 
+
 class RoomController extends Controller
 {
     public function index()
@@ -18,15 +19,16 @@ class RoomController extends Controller
         $this->reset_custom_id();
 
         //retrieving data
-        $rooms = Room::with('manager')->get()
-            ->map(function ($room)use($user) {
+        $rooms = Room::with('manager')->paginate(10) // Use pagination instead of get()
+        ->through(function ($room)use($user) {
                 return [
                     'id' => $room->id,
                     'custom_id' => $room->custom_id,
                     'number' => $room->number,
                     'capacity' => $room->capacity,
                     'price' => $room->price_in_dollars, // Convert to dollars
-                    'floor' => $room->floor->name,
+                    'floor' => $room->floor->name??null,
+                    'floor_id'=>$room->floor->id??null,
                     'manager' => ($user->role === 'admin' && $room->manager) ? $room->manager->name : 'Admin',
                     'canEdit' => $user->role === 'admin' || $room->manager_id === $user->id
                 ];
@@ -50,12 +52,12 @@ class RoomController extends Controller
         // 'number' => ['required', 'string', 'digits_between:4,10', 'unique:rooms,number'],
         'capacity' => ['required', 'integer','min:1'],
         'price' => ['required', 'numeric'],
+        'floor_id'=>['required']
     ]);
     $lastRoom = Room::where('floor_id', $request->floor_id)->latest('number')->first();
     $newRoomNumber = $lastRoom ? $lastRoom->number + 1 : ($request->floor_id * 1000 + 1);
     //Convert price to cent
     $validatedData['price'] = (int) ($validatedData['price'] * 100);
-    $validatedData['floor_id']=$request->floor_id;
     $validatedData['number']=$newRoomNumber;
     // Automatically assign manager_id if user is a manager
     $validatedData['manager_id'] = $user->role === 'manager' ? $user->id : ($request->manager_id ?? null);
@@ -70,12 +72,12 @@ class RoomController extends Controller
         $validatedData = $request->validate([
             'capacity' => ['required', 'integer','min:1'],
             'price' => ['required', 'numeric'],
-            'manager_id' => ['nullable', 'exists:users,id'], // Ensure the manager exists
+            'manager_id' => ['nullable', 'exists:users,id'],// Ensure the manager exists
+            'floor_id'=>['required']
         ]);
 
          //Convert price to cent
         $validatedData['price'] = (int) ($validatedData['price'] * 100);
-        $validatedData['floor_id']=$request->floor_id;
         $room->update($validatedData);
 
         return redirect()->back();
