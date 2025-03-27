@@ -36,7 +36,7 @@ class ClientApprovedNotification extends Notification implements ShouldQueue
     {
         return (new MailMessage)
             ->subject('Your Account Has Been Approved')
-            ->line('Dear ' . $notifiable . ',')
+            ->line('Dear ' . $notifiable->name . ',')
             ->line('We are pleased to inform you that your account has been approved.')
             ->action('Login Now', url('/login'))
             ->line('Thank you for choosing us!');
