@@ -122,8 +122,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('client.reserve');
 
     // Cancel reservation
-    Route::post('/client/cancel-reservation', [ReservationController::class, 'cancelReservation'])
-        ->name('client.cancelReservation');
+    Route::delete('/client/cancel-reservation', [ReservationController::class, 'cancelReservation'])->name('client.cancelReservation');
+
 
     // Show client's reservations
     Route::get('/client/my-reservations', [ReservationController::class, 'myReservations'])

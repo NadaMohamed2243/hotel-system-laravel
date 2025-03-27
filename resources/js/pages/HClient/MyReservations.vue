@@ -50,13 +50,30 @@ const props = defineProps({
     }
 });
 
+// const cancelReservation = (reservationId) => {
+//     if (confirm('Are you sure you want to cancel this reservation?')) {
+//         router.post(route('client.cancelReservation'), {
+//             reservation_id: reservationId
+//         });
+//     }
+// };
+
 const cancelReservation = (reservationId) => {
     if (confirm('Are you sure you want to cancel this reservation?')) {
-        router.post(route('client.cancelReservation'), {
-            reservation_id: reservationId
+        router.delete(route('client.cancelReservation'), {
+            data: { reservation_id: reservationId },
+            onSuccess: () => {
+                reservations.value = reservations.value.filter(res => res.id !== reservationId);
+                alert('Reservation canceled successfully!');
+            },
+            onError: (error) => {
+                console.error('Error canceling reservation:', error);
+                alert('Failed to cancel reservation');
+            }
         });
     }
 };
+
 
 onMounted(() => {
     // router.get('/client/my-reservations', {

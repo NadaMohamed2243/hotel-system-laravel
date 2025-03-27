@@ -225,7 +225,7 @@ class ReservationController extends Controller
         }
     }
 
-    // Cancel a reservation
+//cancel reservation
     public function cancelReservation(Request $request)
     {
         $request->validate([
@@ -236,6 +236,9 @@ class ReservationController extends Controller
         $reservation->room->update(['is_reserved' => false]);
         $reservation->delete();
 
-        return redirect()->route('client.reservations')->with('success', 'Reservation canceled successfully.');
+        return back()->with([
+            'success' => 'Reservation canceled successfully.'
+        ]);
     }
+
 }
