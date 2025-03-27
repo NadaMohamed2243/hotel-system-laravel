@@ -15,7 +15,7 @@
                 </thead>
                 <tbody v-if="reservations.length > 0">
                     <tr v-for="reservation in reservations" :key="reservation.id" class="text-center">
-                        <td class="border p-2">{{ reservation.room_id }}</td>
+                        <td class="border p-2">{{ reservation.room_number }}</td>
                         <td class="border p-2">{{ reservation.accompany_number }}</td>
                         <td class="border p-2">${{ (reservation.paid_price / 100).toFixed(2) }}</td>
                         <td class="border p-2">
@@ -28,10 +28,9 @@
                 </tbody>
                 <tbody v-else>
                     <tr>
-                        <td colspan="3" class="text-center p-4">No reservations available.</td>
+                        <td colspan="4" class="text-center p-4">No reservations available.</td>
                     </tr>
                 </tbody>
-
             </table>
         </div>
     </AppLayout>
@@ -45,9 +44,19 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import ClientSidebar from '@/components/ClientSidebar.vue';
 
 const props = defineProps({
-    reservations: Array
+    reservations: {
+        type: Array,
+        required: true
+    }
 });
-const reservations = ref(props.reservations);
+
+const cancelReservation = (reservationId) => {
+    if (confirm('Are you sure you want to cancel this reservation?')) {
+        router.post(route('client.cancelReservation'), {
+            reservation_id: reservationId
+        });
+    }
+};
 
 onMounted(() => {
     // router.get('/client/my-reservations', {
@@ -60,22 +69,5 @@ onMounted(() => {
     //     }
     // });
 });
-
-
-
-// Function to cancel the reservation
-const cancelReservation = (id) => {
-    router.post('/client/cancel-reservation', { id }, {
-        onSuccess: (response) => {
-            console.log('Reservation canceled:', response);
-            alert(response.message);
-            fetchReservations();
-        },
-        onError: (error) => {
-            console.error('Error canceling reservation:', error);
-            alert('Error canceling reservation!');
-        }
-    });
-};
 
 </script>

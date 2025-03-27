@@ -57,8 +57,17 @@ class ReservationController extends Controller
         }
 
         $reservations = Reservation::where('client_id', $user->client->id)
+            ->with('room:id,number')  // Eager load room with specific fields
             ->select('id', 'room_id', 'accompany_number', 'paid_price')
-            ->get();
+            ->get()
+            ->map(function ($reservation) {
+                return [
+                    'id' => $reservation->id,
+                    'room_number' => $reservation->room->number,
+                    'accompany_number' => $reservation->accompany_number,
+                    'paid_price' => $reservation->paid_price
+                ];
+            });
 
         return Inertia::render('HClient/MyReservations', [
             'reservations' => $reservations
