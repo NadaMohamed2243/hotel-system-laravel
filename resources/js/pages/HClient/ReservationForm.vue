@@ -10,10 +10,10 @@ const props = defineProps({
 });
 
 const accompanyNumber = ref('');
-const errorMessage = ref(props.error_message || ''); 
+const errorMessage = ref(props.error_message || '');
 
 const submitReservation = () => {
-    console.log('Accompany Number:', accompanyNumber.value); 
+    console.log('Accompany Number:', accompanyNumber.value);
     console.log('Room Capacity:', props.room.capacity);
 
     if (accompanyNumber.value > props.room.capacity) {
@@ -21,21 +21,21 @@ const submitReservation = () => {
         return;
     }
 
-    errorMessage.value = ''; 
+    errorMessage.value = '';
 
     axios.post('/client/reserve', {
         room_id: props.room.id,
         accompany_number: accompanyNumber.value
     })
-    .then(() => {
-        console.log('Reservation successful');
-        // Redirect to the payment page
-        window.location.href = `/client/make-reservation/${props.room.id}/payment`;
-    })
-    .catch((error) => {
-        console.error('Error during reservation:', error);
-        errorMessage.value = "An error occurred during reservation.";
-    });
+        .then((response) => {
+            console.log('Reservation successful');
+            // Let the backend handle the redirect
+            window.location.href = response.data.redirect;
+        })
+        .catch((error) => {
+            console.error('Error during reservation:', error);
+            errorMessage.value = "An error occurred during reservation.";
+        });
 };
 
 
@@ -51,7 +51,8 @@ const submitReservation = () => {
 
             <div class="mt-4">
                 <label class="block text-gray-700 font-semibold">Number of Accompany</label>
-                <input v-model="accompanyNumber" type="number" min="1" class="w-full mt-2 p-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500" />
+                <input v-model="accompanyNumber" type="number" min="1"
+                    class="w-full mt-2 p-2 border rounded-lg focus:ring-blue-500 focus:border-blue-500" />
 
                 <p v-if="errorMessage" class="text-red-500 text-sm mt-2">{{ errorMessage }}</p>
             </div>

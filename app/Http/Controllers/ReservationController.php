@@ -89,17 +89,20 @@ class ReservationController extends Controller
     // Store a new reservation
     public function storeReservation(Request $request)
     {
-        //
         Log::info('Received reservation request:', $request->all());
 
         $room = Room::findOrFail($request->room_id);
 
         if ($room->is_reserved) {
-            return Inertia::render('ErrorPage', ['message' => 'This room is already reserved']);
+            return response()->json([
+                'error' => 'This room is already reserved'
+            ], 422);
         }
 
         if ($request->accompany_number > $room->capacity) {
-            return back()->withErrors(['accompany_number' => 'Exceeds room capacity']);
+            return response()->json([
+                'error' => 'Exceeds room capacity'
+            ], 422);
         }
 
         //reserve the room
@@ -111,22 +114,16 @@ class ReservationController extends Controller
             'reserved_at' => now(),
         ]);
 
-        //add reservation message
-        Log::info('Reservation stored successfully:', ['reservation_id' => $reservation->id, 'client_id' => $reservation->client_id, 'room_id' => $reservation->room_id]);
+        Log::info('Reservation stored successfully:', [
+            'reservation_id' => $reservation->id,
+            'client_id' => $reservation->client_id,
+            'room_id' => $reservation->room_id
+        ]);
 
-        //create a payment intent
-        $paymentIntent = $this->createPaymentIntent($room->price);
-
-        // Check if there was an error creating the payment intent
-        if (isset($paymentIntent['error'])) {
-            return back()->withErrors(['payment' => $paymentIntent['error']]);
-        }
-
-        //
-        return Inertia::render('HClient/PaymentForm', [
-            'roomId' => $room->id,
-            'clientSecret' => $paymentIntent['clientSecret'],
-            'amount' => $room->price
+        // Return JSON response with redirect URL
+        return response()->json([
+            'success' => true,
+            'redirect' => route('client.payment', ['roomId' => $room->id])
         ]);
     }
 
@@ -152,45 +149,6 @@ class ReservationController extends Controller
             'clientSecret' => $paymentIntent['clientSecret'],
             'amount' => $room->price
         ]);
-    }
-
-    //
-    public function processPayment(Request $request, $roomId)
-    {
-        // Validate the request
-        $request->validate([
-            'payment_method_id' => 'required|string',
-        ]);
-
-        $room = Room::findOrFail($roomId);
-
-        //stripe to process payment
-        try {
-            Stripe::setApiKey(env('STRIPE_SECRET_KEY'));
-
-            $paymentIntent = PaymentIntent::create([
-                'amount' => $room->price * 100, //price in cents
-                'currency' => 'usd',
-                'payment_method' => $request->payment_method_id,
-                'confirm' => true,
-            ]);
-
-            // if payment is successful, update the reservation status to "paid"
-            $reservation = Reservation::where('room_id', $roomId)
-                ->where('client_id', Auth::id())
-                ->first();
-
-            if (!$reservation) {
-                return back()->withErrors(['reservation_error' => 'Reservation not found']);
-            }
-            // update the reservation status to "paid"
-            $reservation->status = 'paid';
-            $reservation->save();
-
-            return redirect()->route('client.reservations')->with('success', 'Payment successful, reservation confirmed!');
-        } catch (\Exception $e) {
-            return back()->withErrors(['payment_error' => 'Payment failed: ' . $e->getMessage()]);
-        }
     }
 
     // to create a payment intent
