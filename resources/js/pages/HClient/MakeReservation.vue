@@ -10,7 +10,7 @@
                     <h2 class="text-xl font-semibold text-blue-600">Room Number: {{ room.number }}</h2>
                     <p class="text-gray-700 mt-2">Capacity: <span class="font-medium">{{ room.capacity }}</span> persons
                     </p>
-                    <p class="text-gray-700">Price: <span class="font-medium">${{ room.price }}</span></p>
+                    <p class="text-gray-700">Price: <span class="font-medium">${{ (room.price / 100) }}</span></p>
 
                     <p v-if="room.is_reserved" class="text-red-500 font-bold mt-2">Reserved</p>
                     <p v-else class="text-green-500 font-bold mt-2">✅ Available</p>

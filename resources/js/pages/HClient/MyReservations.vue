@@ -16,7 +16,7 @@
                     <TableRow v-for="reservation in reservations" :key="reservation.id">
                         <TableCell>{{ reservation.room_number }}</TableCell>
                         <TableCell>{{ reservation.accompany_number }}</TableCell>
-                        <TableCell>{{ reservation.paid_price }} ¢</TableCell>
+                        <TableCell>${{ (reservation.paid_price / 100) }}</TableCell>
                         <TableCell>
                             <Button variant="destructive" @click="cancelReservation(reservation.id)">
                                 Cancel
