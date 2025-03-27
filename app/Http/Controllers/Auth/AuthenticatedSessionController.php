@@ -37,8 +37,6 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::user();
 
-
-
         // Update last login time for clients
         if ($user->role === 'client') {
             Client::where('user_id', $user->id)->update(['last_login_at' => now()]);
@@ -54,24 +52,19 @@ class AuthenticatedSessionController extends Controller
                     'email' => 'Your account has been banned.',
                 ]);
             }
+            return redirect()->intended(route('receptionist.dashboard'));
         }
-
 
         if ($user->role === 'manager') {
             return redirect()->intended(route('manager.dashboard'));
         }
 
-
-        if (Auth::user()->role == 'receptionist') {
-            return redirect()->intended(route('receptionist.dashboard', absolute: false));
+        if ($user->role === 'admin') {
+            return redirect()->intended(route('admin.dashboard'));
         }
 
-        // Redirect to admin dashboard if user is not a client
-        else if (Auth::user()->role !== 'client') {
-            return redirect()->intended(route('admin.dashboard', absolute: false));
-        }
-
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Default redirect for clients
+        return redirect()->intended(route('dashboard'));
     }
 
     /**
