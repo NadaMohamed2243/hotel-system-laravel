@@ -13,7 +13,8 @@ import { Head, Link } from '@inertiajs/vue3';
             class="flex min-h-screen flex-col items-center bg-[#FDFDFC] p-6 text-[#1b1b18] dark:bg-[#0a0a0a] lg:justify-center lg:p-8">
             <header class="not-has-[nav]:hidden mb-6 w-full max-w-[335px] text-sm lg:max-w-4xl">
                 <nav class="flex items-center justify-end gap-4">
-                    <Link v-if="$page.props.auth.user" :href="route('dashboard')"
+                    <Link v-if="$page.props.auth.user"
+                        :href="$page.props.auth.user.role === 'client' ? route('dashboard') : route(`${$page.props.auth.user.role}.dashboard`)"
                         class="inline-block rounded-sm border border-[#19140035] px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#1915014a] dark:border-[#3E3E3A] dark:text-[#EDEDEC] dark:hover:border-[#62605b]">
                     Dashboard
                     </Link>
@@ -37,7 +38,11 @@ import { Head, Link } from '@inertiajs/vue3';
                         class="flex-1 rounded-bl-lg rounded-br-lg bg-white p-6 pb-12 text-[13px] leading-[20px] shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:bg-[#161615] dark:text-[#EDEDEC] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] lg:rounded-br-none lg:rounded-tl-lg lg:p-20">
                         <h1 class="mb-5 text-[22px] font-bold">Welcome to our hotel system</h1>
                         <p class="mb-2 text-[#706f6c] dark:text-[#A1A09A]">
-                            Experience seamless hotel management with our modern and intuitive system. Designed to enhance efficiency and convenience, our platform ensures smooth operations for hotel staff and an effortless booking experience for guests.
+                            Experience seamless hotel management with our modern and intuitive system. Designed to
+                            enhance
+                            efficiency and convenience, our platform ensures smooth operations for hotel staff and an
+                            effortless
+                            booking experience for guests.
                         </p>
                         <ul class="mb-1 flex flex-col lg:mb-1">
                             <h2 class="mt-4 mb-3 text-[16px]">Key Features</h2>
