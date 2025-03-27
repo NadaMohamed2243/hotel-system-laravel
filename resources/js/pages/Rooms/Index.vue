@@ -9,15 +9,18 @@ import {Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Pencil, Trash, Loader2 ,Eye} from 'lucide-vue-next';
+import { computed } from 'vue';
+
+const route = computed(() => (props.role === 'admin' ? '/admin' : '/manager'));
 
 const props = defineProps({
-    rooms: Array,
+    rooms: Object,
     managers: Array,
     role: String,
     floors:Array,
 });
 
-const rooms = ref(props.rooms);
+const rooms = ref(props.rooms?.data ?? []);
 const showRoomDialog = ref(false);
 const showDeleteDialog = ref(false);
 const isSubmitting = ref(false);
@@ -28,18 +31,11 @@ const showShowDialog = ref(false);
 const selectedRoom = ref(null);
 const errors = ref({}); // Store validation errors
 
-let route;
-if(props.role==='admin'){
-    route = '/admin';
-}else{
-    route= '/manager';
-}
-
 const form = ref({
     number: '',
     capacity: '',
     price: '',
-    manager_id: props.role === 'admin' ? null : props.managers[0]?.id || null,
+    manager_id: props.role === 'admin' ? null : props.managers[0]?.id ,
     floor_id: null,
 });
 
@@ -73,11 +69,12 @@ const deleteRoom = (room) => {
 
 const confirmDelete = () => {
     isSubmitting.value = true;
-    router.delete(`${route}/rooms/${roomToDelete.value.id}`, {
+    router.delete(`${route.value}/rooms/${roomToDelete.value.id}`, {
         preserveScroll: true,
         onSuccess: (page) => {
             showDeleteDialog.value = false;
-            rooms.value = page.props.rooms || rooms.value;
+            rooms.value = page.props.rooms.data || rooms.value.data;
+            // console.log(rooms.value);
         },
         onFinish: () => {
             isSubmitting.value = false;
@@ -88,24 +85,25 @@ const confirmDelete = () => {
 const submitRoom = () => {
     isSubmitting.value = true;
     errors.value = {}; // Clear previous errors
-
-    const url = isEditing.value ? `${route}/rooms/${editingRoomId.value}` : `${route}/rooms`;
+    const url = isEditing.value ? `${route.value}/rooms/${editingRoomId.value}` : `${route.value}/rooms`;
     const method = isEditing.value ? 'put' : 'post';
-
     router[method](url, form.value, {
         preserveScroll: true,
         onSuccess: (page) => {
             showRoomDialog.value = false;
-            rooms.value = page.props.rooms || rooms.value; // Update rooms without reload
+            rooms.value = page.props.rooms.data|| rooms.value; // Update rooms without reload
         },
         onError: (formErrors) => {
-            console.log("Validation Errors:", formErrors); // Debugging
             errors.value = formErrors; // Capture validation errors
         },
         onFinish: () => {
             isSubmitting.value = false;
         }
     });
+};
+
+const goToPage = (url) => {
+    if (url) router.visit(url);
 };
 </script>
 <template>
@@ -126,18 +124,18 @@ const submitRoom = () => {
                                 <TableHead>Number</TableHead>
                                 <TableHead>Capacity</TableHead>
                                 <TableHead>Price</TableHead>
-                                <TableHead v-if="role==='admin'">Manager Name</TableHead>
+                                <TableHead v-if="props.role==='admin'">Manager Name</TableHead>
                                 <TableHead class="text-center">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <TableRow v-for="room in rooms" :key="room.id">
+                            <TableRow v-for="room in rooms" :key="room?.id">
                                 <TableCell class="font-medium">{{ room.custom_id }}</TableCell>
                                 <TableCell class="font-medium">{{ room.floor }}</TableCell>
                                 <TableCell>{{ room.number }}</TableCell>
                                 <TableCell>{{ room.capacity }}</TableCell>
                                 <TableCell>{{ room.price }}$</TableCell>
-                                <TableCell v-if="role==='admin'">{{ room.manager }}</TableCell>
+                                <TableCell v-if="props.role==='admin'">{{ room.manager }}</TableCell>
                                 <TableCell class="text-center"  v-if="room.canEdit">
                                     <div class="flex justify-center gap-2">
                                         <Button variant="outline" size="sm" @click="openShowDialog(room)">
@@ -165,7 +163,18 @@ const submitRoom = () => {
                 </CardContent>
             </Card>
         </div>
+          <!-- Pagination -->
+          <div class="flex justify-center mt-4">
+            <button v-for="(link, index) in (props.rooms?.links || [])" :key="index"
+                :disabled="!link.url"
+                @click="goToPage(link.url)"
+                v-html="link.label"
+                class="mx-1 px-4 py-2 border rounded hover:bg-gray-200"
+                :class="{ 'bg-blue-500 text-white': link.active, 'cursor-not-allowed text-gray-500': !link.url }">
+            </button>
+        </div>
 
+        <!-- Dialogs -->
         <Dialog v-model:open="showRoomDialog">
             <DialogContent class="sm:max-w-[425px]">
                 <DialogHeader>
@@ -175,58 +184,57 @@ const submitRoom = () => {
                     </DialogDescription>
                 </DialogHeader>
                 <form @submit.prevent="submitRoom">
-                <div class="grid gap-4 py-4">
-                    <div class="grid gap-2" v-if="isEditing">
-                        <Label for="number">Room Number</Label>
-                        <Input id="number" :value="form.number" disabled
-                        :class="['text-white',{ 'border-red-500': errors.number}]"/>
-                        <p v-if="errors.number" class="text-red-500 text-sm">{{ errors.number }}</p>
-                    </div>
+                    <div class="grid gap-4 py-4">
+                        <div class="grid gap-2" v-if="isEditing">
+                            <Label for="number">Room Number</Label>
+                            <Input id="number" v-model="form.number" disabled
+                            :class="['text-white',{ 'border-red-500': errors.number}]"/>
+                            <p v-if="errors.number" class="text-red-500 text-sm">{{ errors.number }}</p>
+                        </div>
+                        <div class="grid gap-2">
+                            <Label for="floor" class="text-white">Select Floor</Label>
+                            <select id="floor" v-model="form.floor_id"
+                                class="w-full bg-black text-white border border-gray-600 rounded-lg p-2 focus:ring-2 focus:ring-gray-400 focus:outline-none">
+                                <option v-for="floor in props.floors" :key="floor.id" :value="floor.id" :selected="form.floor_id">
+                                    {{ floor.name }}
+                                </option>
+                            </select>
+                            <p v-if="errors.floor_id" class="text-red-500 text-sm">{{ errors.floor_id}}</p>
+                        </div>
+
                     <div class="grid gap-2">
-                        <Label for="floor" class="text-white">Select Floor</Label>
-                        <select id="floor" v-model="form.floor_id"
-                            class="w-full bg-black text-white border border-gray-600 rounded-lg p-2 focus:ring-2 focus:ring-gray-400 focus:outline-none">
-                            <option v-for="floor in props.floors" :key="floor.id" :value="floor.id">
-                                {{ floor.name }}
-                            </option>
-                        </select>
+                        <Label for="capacity">Capacity</Label>
+                        <Input id="capacity" type="number" v-model="form.capacity" placeholder="2"
+                            :class="{ 'border-red-500': errors.capacity }"/>
+                        <p v-if="errors.capacity" class="text-red-500 text-sm">{{ errors.capacity }}</p>
                     </div>
 
-                <div class="grid gap-2">
-                    <Label for="capacity">Capacity</Label>
-                    <Input id="capacity" type="number" v-model="form.capacity" placeholder="2"
-                        :class="{ 'border-red-500': errors.capacity }"/>
-                    <p v-if="errors.capacity" class="text-red-500 text-sm">{{ errors.capacity }}</p>
+                    <div class="grid gap-2">
+                        <Label for="price">Price</Label>
+                        <Input id="price" type="number" v-model="form.price" placeholder="100"
+                            :class="{ 'border-red-500': errors.price }"/>
+                        <p v-if="errors.price" class="text-red-500 text-sm">{{ errors.price }}</p>
+                    </div>
+
+                    <div class="grid gap-2">
+                        <select id="manager" v-model="form.manager_id"
+                            class="w-full bg-black text-white border border-gray-600 rounded-lg p-2 focus:ring-2 focus:ring-gray-400 focus:outline-none"
+                            disabled
+                            hidden>
+                            <option v-if="props.role === 'admin'" :value="null">Admin</option>
+                            <option v-else :value="props.managers[0]?.id" >{{ props.managers[0]?.name }}</option>
+                        </select>
+                        <p v-if="errors.manager_id" class="text-red-500 text-sm">{{ errors.manager_id }}</p>
+                    </div>
                 </div>
-
-                <div class="grid gap-2">
-                    <Label for="price">Price</Label>
-                    <Input id="price" type="number" v-model="form.price" placeholder="100"
-                        :class="{ 'border-red-500': errors.price }"/>
-                    <p v-if="errors.price" class="text-red-500 text-sm">{{ errors.price }}</p>
-                </div>
-
-                <div class="grid gap-2">
-                    <select id="manager" v-model="form.manager_id"
-                        class="w-full bg-black text-white border border-gray-600 rounded-lg p-2 focus:ring-2 focus:ring-gray-400 focus:outline-none"
-                        disabled
-                        hidden>
-                        <option v-if="role === 'admin'" :value="null">Admin</option>
-                        <option v-else :value="props.managers[0]?.id" >{{ props.managers[0]?.name }}</option>
-                    </select>
-                    <p v-if="errors.manager_id" class="text-red-500 text-sm">{{ errors.manager_id }}</p>
-                </div>
-            </div>
-
-    <DialogFooter>
-        <Button type="button" variant="outline" @click="showRoomDialog = false">Cancel</Button>
-        <Button type="submit" :disabled="isSubmitting">
-            <Loader2 v-if="isSubmitting" class="mr-2 h-4 w-4 animate-spin" />
-            {{ isEditing ? 'Update Room' : 'Save Room' }}
-        </Button>
-    </DialogFooter>
-</form>
-
+                    <DialogFooter>
+                        <Button type="button" variant="outline" @click="showRoomDialog = false">Cancel</Button>
+                        <Button type="submit" :disabled="isSubmitting">
+                            <Loader2 v-if="isSubmitting" class="mr-2 h-4 w-4 animate-spin" />
+                            {{ isEditing ? 'Update Room' : 'Save Room' }}
+                        </Button>
+                    </DialogFooter>
+                </form>
             </DialogContent>
         </Dialog>
 
@@ -265,7 +273,7 @@ const submitRoom = () => {
                     <p><strong>Floor Name:</strong> {{ selectedRoom?.floor }} </p>
                     <p><strong>Capacity:</strong> {{ selectedRoom?.capacity }}</p>
                     <p><strong>Price:</strong> {{ selectedRoom?.price }} $</p>
-                    <p v-if="role==='admin'"><strong>Manager Name:</strong> {{ selectedRoom?.manager }}</p>
+                    <p v-if="props.role==='admin'"><strong>Manager Name:</strong> {{ selectedRoom?.manager }}</p>
                 </div>
                 <DialogFooter>
                     <Button type="button" variant="outline" @click="showShowDialog = false">Close</Button>

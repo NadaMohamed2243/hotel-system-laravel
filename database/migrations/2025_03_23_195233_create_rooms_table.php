@@ -18,13 +18,6 @@ return new class extends Migration
             $table->integer('price');
             $table->foreignId('manager_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->timestamps();
-
-            // $table->foreignId('floor_id')->constrained()->onDelete('cascade');
-            // $table->boolean('is_booked')->default(false);
-            $table->boolean('is_reserved')->default(false); //H Add this line
-
-            
-
         });
     }
 

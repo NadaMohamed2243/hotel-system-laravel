@@ -14,87 +14,89 @@ use Inertia\Inertia;
 
 class ReceptionistController extends Controller
 {
-
     public function create()
     {
-
         $managers = [];
 
-    // Only show managers dropdown for admin
-    if (auth()->user()->role === 'admin') {
-        $managers = User::where('role', 'manager')
-            ->select('id', 'name', 'email')
-            ->get();
-    }
-
-    return inertia('Admin/Receptionists/Create', [
-        'managers' => $managers,
-        'currentManagerId' => auth()->user()->role === 'manager' ? auth()->id() : null
-    ]);
-
-    }
-
-
-
-
-
-    public function index()
-{
-    // Check permissions
-    try {
-        if (!auth()->user()->hasPermissionTo('manage receptionists')) {
-            return abort(403, 'You do not have permission to view receptionists.');
-        }
-    } catch (\Exception $e) {
-        Log::warning('Permission check failed: ' . $e->getMessage());
-        if (auth()->user()->role !== 'admin' && auth()->user()->role !== 'manager') {
-            return abort(403, 'Unauthorized action.');
-        }
-    }
-
-    // Determine if this is a manager route
-    $isManagerRoute = request()->is('manager/receptionists*');
-
-    // Base query - show all receptionists
-    $query = Receptionist::with(['user', 'manager']);
-
-    $receptionists = $query->get()->map(function ($receptionist) {
-        $avatarUrl = null;
-        if ($receptionist->user->avatar_image) {
-            $avatarUrl = asset('storage/' . $receptionist->user->avatar_image);
+        if (auth()->user()->role === 'admin') {
+            $managers = User::where('role', 'manager')
+                ->select('id', 'name', 'email')
+                ->get();
         }
 
-        return [
-            'id' => $receptionist->id,
-            'is_banned' => $receptionist->is_banned,
-            'created_at' => $receptionist->created_at->format('Y-m-d H:i:s'),
-            'name' => $receptionist->user->name,
-            'email' => $receptionist->user->email,
-            'national_id' => $receptionist->user->national_id,
-            'avatar_image' => $avatarUrl,
-            'manager_name' => $receptionist->manager->name ?? null,
-            'manager_email' => $receptionist->manager->email ?? null,
-            'manager_id' => $receptionist->manager_id, // Add manager_id for permission checks
-            'can_edit' => auth()->user()->role === 'admin' ||
-                         (auth()->user()->role === 'manager' && $receptionist->manager_id === auth()->id()),
-            'can_ban' => auth()->user()->role === 'admin' ||
-                        (auth()->user()->role === 'manager' && $receptionist->manager_id === auth()->id()),
-            'can_delete' => auth()->user()->role === 'admin' // Only admin can delete
-        ];
-    });
+        return inertia('Admin/Receptionists/Create', [
+            'managers' => $managers,
+            'currentManagerId' => auth()->user()->role === 'manager' ? auth()->id() : null
+        ]);
+    }
 
-    // Only get managers list if not manager route
-    $managers = $isManagerRoute
-        ? []
-        : User::where('role', 'manager')->get(['id', 'name', 'email']);
+    public function index(Request $request)
+    {
+        $isManagerRoute = request()->is('manager/receptionists*');
 
-    return Inertia::render('Receptionists/Index', [
-        'receptionists' => $receptionists,
-        'managers' => $managers,
-        'isManagerView' => $isManagerRoute,
-        'currentManagerId' => auth()->id() // Pass current manager ID to frontend
-    ]);
-}
+        $page = $request->input('page', 1);
+        $pageSize = $request->input('pageSize', 10);
+
+        $query = Receptionist::with(['user', 'manager']);
+
+        
+
+        $totalCount = $query->count();
+
+        $paginatedReceptionists = $query->skip(($page - 1) * $pageSize)
+                                       ->take($pageSize)
+                                       ->get();
+
+        $receptionists = $paginatedReceptionists->map(function ($receptionist) {
+            $avatarUrl = null;
+            if ($receptionist->user->avatar_image) {
+                $avatarUrl = asset('storage/' . $receptionist->user->avatar_image);
+            }
+
+            return [
+                'id' => $receptionist->id,
+                'is_banned' => $receptionist->is_banned,
+                'created_at' => $receptionist->created_at->format('Y-m-d H:i:s'),
+                'name' => $receptionist->user->name,
+                'email' => $receptionist->user->email,
+                'national_id' => $receptionist->user->national_id,
+                'avatar_image' => $avatarUrl,
+                'manager_name' => $receptionist->manager->name ?? null,
+                'manager_email' => $receptionist->manager->email ?? null,
+                'manager_id' => $receptionist->manager_id, // Add manager_id for permission checks
+                'can_edit' => auth()->user()->role === 'admin' ||
+                             (auth()->user()->role === 'manager' && $receptionist->manager_id === auth()->id()),
+                'can_ban' => auth()->user()->role === 'admin' ||
+                            (auth()->user()->role === 'manager' && $receptionist->manager_id === auth()->id()),
+                'can_delete' => auth()->user()->role === 'admin' // Only admin can delete
+            ];
+        });
+
+        // Only get managers list if not manager route
+        $managers = $isManagerRoute
+            ? []
+            : User::where('role', 'manager')->get(['id', 'name', 'email']);
+
+        // Calculate pagination metadata
+        $pageCount = ceil($totalCount / $pageSize);
+
+        return Inertia::render('Receptionists/Index', [
+            'receptionists' => [
+                'data' => $receptionists,
+                'meta' => [
+                    'total' => $totalCount,
+                    'pageCount' => $pageCount,
+                    'pageSize' => (int)$pageSize,
+                    'pageIndex' => (int)$page - 1, // 0-based for TanStack Table
+                    'from' => ($page - 1) * $pageSize + 1,
+                    'to' => min($page * $pageSize, $totalCount),
+                ]
+            ],
+            'managers' => $managers,
+            'isManagerView' => $isManagerRoute,
+            'currentManagerId' => auth()->id() // Pass current manager ID to frontend
+        ]);
+    }
 
     public function show(Receptionist $receptionist)
     {
@@ -102,7 +104,6 @@ class ReceptionistController extends Controller
             'receptionist' => $receptionist->load('user', 'manager'),
         ]);
     }
-
 
     public function store(Request $request)
     {
@@ -117,14 +118,10 @@ class ReceptionistController extends Controller
             'national_id.unique' => 'This national ID is already registered in our system',
         ]);
 
-
-        //    // For managers, set the manager_id to the current user ID
         if (auth()->user()->role === 'manager') {
             $validated['manager_id'] = auth()->id();
         }
 
-
-        // Handle avatar upload
         $avatarPath = null;
         if ($request->hasFile('avatar')) {
             $avatarPath = $request->file('avatar')->store('avatars', 'public');
@@ -142,26 +139,17 @@ class ReceptionistController extends Controller
 
         $user->assignRole('receptionist');
 
-        // Create receptionist record
         $receptionist = Receptionist::create([
             'user_id' => $user->id,
             'manager_id' => $validated['manager_id'],
         ]);
 
         return redirect()->route($this->isManagerRoute()
-        ? 'manager.receptionists.index'
-        : 'admin.receptionists.index')
-        ->with('success', 'Receptionist added successfully');
-
-
-        return Inertia::render('Receptionists/Index', [
-            'receptionists' => Receptionist::with(['user', 'manager'])->get(),
-            'success' => 'Receptionist added successfully'
-        ]);
+            ? 'manager.receptionists.index'
+            : 'admin.receptionists.index')
+            ->with('success', 'Receptionist added successfully');
     }
 
-
-    // ReceptionistController.php
     public function edit(Receptionist $receptionist)
     {
         return response()->json([
@@ -179,17 +167,13 @@ class ReceptionistController extends Controller
             'manager_id' => 'required|exists:users,id',
             'is_banned' => 'boolean',
             'avatar_image' => 'nullable|image|max:2048'
-
         ]);
 
-        // Update user
         $receptionist->user->update([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'national_id' => $validated['national_id']
         ]);
-
-        // Update avatar if provided
         if ($request->hasFile('avatar_image')) {
             // Delete old avatar if exists
             if ($receptionist->user->avatar_image) {
@@ -200,8 +184,6 @@ class ReceptionistController extends Controller
             $receptionist->user->update(['avatar_image' => $path]);
         }
 
-
-        // Update receptionist
         $receptionist->update([
             'manager_id' => $validated['manager_id'],
             'is_banned' => $validated['is_banned']
@@ -213,24 +195,18 @@ class ReceptionistController extends Controller
         ->with('updatedReceptionist', $receptionist);
     }
 
-
     public function destroy(Receptionist $receptionist)
     {
         try {
-            // Check authorization
             if (Auth::user()->role === 'manager' && $receptionist->manager_id !== Auth::id()) {
                 return redirect()->back()->with('error', 'You are not authorized to delete this receptionist.');
             }
 
-            // Get the user first
             $user = $receptionist->user;
 
-            // Delete the receptionist record
             $receptionist->delete();
 
-            // Delete the associated user
             if ($user) {
-                // Delete avatar if exists
                 if ($user->avatar_image) {
                     Storage::disk('public')->delete($user->avatar_image);
                 }
@@ -277,6 +253,5 @@ class ReceptionistController extends Controller
         return request()->is('manager/*');
     }
 }
-
 
 

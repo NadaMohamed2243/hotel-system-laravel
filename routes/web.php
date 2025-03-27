@@ -155,7 +155,7 @@ require __DIR__.'/auth.php';
 
 // Managage Receptionists
 
-Route::prefix('admin')->middleware(['auth', 'verified'])->group(function () {
+Route::prefix('admin')->middleware(['auth', 'verified','permission:manage receptionists'])->group(function () {
     // Admin receptionist management
     Route::prefix('receptionists')->group(function () {
         Route::get('/', [ReceptionistController::class, 'index'])->name('admin.receptionists.index');
@@ -172,19 +172,16 @@ Route::prefix('admin')->middleware(['auth', 'verified'])->group(function () {
 
 //Floor Management
 
-Route::prefix('admin')->middleware(['auth', 'verified'])->group(function () {
-
-Route::prefix('floors')->group(function () {
-    Route::get('/', [FloorController::class, 'index'])->name('admin.floors.index');
-    Route::get('/create', [FloorController::class, 'create'])->name('admin.floors.create');
-    Route::post('/', [FloorController::class, 'store'])->name('admin.floors.store');
-    Route::get('/{floor}/edit', [FloorController::class, 'edit'])->name('admin.floors.edit');
-    Route::put('/{floor}', [FloorController::class, 'update'])->name('admin.floors.update');
-    Route::delete('/{floor}', [FloorController::class, 'destroy'])->name('admin.floors.destroy');
-});
-
-});
-
+Route::prefix('admin/floors')
+    ->middleware(['auth', 'verified', 'permission:manage floors'])
+    ->group(function () {
+        Route::get('/', [FloorController::class, 'index'])->name('admin.floors.index');
+        Route::get('/create', [FloorController::class, 'create'])->name('admin.floors.create');
+        Route::post('/', [FloorController::class, 'store'])->name('admin.floors.store');
+        Route::get('/{floor}/edit', [FloorController::class, 'edit'])->name('admin.floors.edit');
+        Route::put('/{floor}', [FloorController::class, 'update'])->name('admin.floors.update');
+        Route::delete('/{floor}', [FloorController::class, 'destroy'])->name('admin.floors.destroy');
+    });
 
 
 // Manager-specific routes
@@ -197,7 +194,9 @@ Route::prefix('manager')->middleware(['auth'])->group(function () {
 
 
     // Receptionist Management
-    Route::prefix('receptionists')->group(function () {
+    Route::prefix('receptionists')
+    ->middleware(['auth', 'verified', 'role:manager','permission:manage receptionists'])
+    ->group(function () {
         Route::get('/', [ReceptionistController::class, 'index'])->name('manager.receptionists.index');
         Route::get('/create', [ReceptionistController::class, 'create'])->name('manager.receptionists.create');
         Route::post('/', [ReceptionistController::class, 'store'])->name('manager.receptionists.store');
@@ -207,6 +206,18 @@ Route::prefix('manager')->middleware(['auth'])->group(function () {
     });
 
 
+});
+
+// Manager-specific floor routes
+Route::prefix('manager/floors')
+    ->middleware(['auth', 'verified', 'role:manager','permission:manage floors'])
+    ->group(function () {
+        Route::get('/', [FloorController::class, 'index'])->name('manager.floors.index');
+        Route::get('/create', [FloorController::class, 'create'])->name('manager.floors.create');
+        Route::post('/', [FloorController::class, 'store'])->name('manager.floors.store');
+        Route::get('/{floor}/edit', [FloorController::class, 'edit'])->name('manager.floors.edit');
+        Route::put('/{floor}', [FloorController::class, 'update'])->name('manager.floors.update');
+        Route::delete('/{floor}', [FloorController::class, 'destroy'])->name('manager.floors.destroy');
 });
 
 
