@@ -129,11 +129,12 @@ class ReservationController extends Controller
             'room_id' => $reservation->room_id
         ]);
 
-        // Return JSON response with redirect URL
+        //Return JSON response with redirect URL
         return response()->json([
             'success' => true,
             'redirect' => route('client.payment', ['roomId' => $room->id])
         ]);
+
     }
 
     // Process payment using Stripe

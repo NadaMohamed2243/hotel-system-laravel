@@ -29,7 +29,7 @@ const submitReservation = () => {
     })
         .then((response) => {
             console.log('Reservation successful');
-            // Let the backend handle the redirect
+            console.log('API Response:', response);
             window.location.href = response.data.redirect;
         })
         .catch((error) => {
