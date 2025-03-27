@@ -1,7 +1,5 @@
 <script setup lang="ts">
-// import AppLayout from '@/layouts/AdminAppLayout.vue';
 import { Head } from '@inertiajs/vue3';
-// import { type BreadcrumbItem } from '@/types';
 import { ref, computed, h } from 'vue';
 import { router } from '@inertiajs/vue3';
 import DataTable from '@/components/DataTable.vue'; // Import the DataTable component
@@ -82,23 +80,12 @@ const columns = [
     },
 ];
 
-// const breadcrumbs: BreadcrumbItem[] = [
-//     {
-//         title: 'Receptionist Dashboard',
-//         href: '/dashboard/receptionist',
-//     },
-//     {
-//         title: 'Approved Clients',
-//         href: '/dashboard/receptionist/clients/approved',
-//     },
-// ];
 </script>
 
 <template>
     <div>
 
         <Head title="My Approved Clients" />
-        <!-- <AppLayout :breadcrumbs="breadcrumbs"> -->
             <div class="space-y-4">
                 <h1 class="m-4 text-2xl font-bold text-gray-800 dark:text-gray-200">My Approved Clients</h1>
                 <DataTable :data="clients" :columns="columns" :pagination="props.pagination" :manual-pagination="true"
@@ -109,6 +96,5 @@ const columns = [
                         });
                     }" />
             </div>
-        <!-- </AppLayout> -->
     </div>
 </template>

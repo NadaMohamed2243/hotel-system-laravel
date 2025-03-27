@@ -12,6 +12,6 @@ Artisan::command('inspire', function () {
 // Define your scheduled command
 Schedule::command('login:reminder')
     ->daily() // Runs once daily at midnight
-    ->at('09:00') // Or specify exact time
+    ->at(time: '09:00') // Or specify exact time
     ->timezone('Africa/Cairo') // Set your timezone
     ->emailOutputOnFailure('admin@example.com'); // Optional error notifications

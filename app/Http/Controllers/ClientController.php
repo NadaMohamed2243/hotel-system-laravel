@@ -15,32 +15,35 @@ use Illuminate\Validation\Rule;
 
 class ClientController extends Controller
 {
-    public function index(){
+    public function index()
+    {
         $role = auth()->user()->role;
         $this->reset_custom_id();
 
         $clients = User::where('role', 'client')
-        ->with('client')
-        ->paginate(7)
-        ->through(function ($user) {
-            return [
-                'id' => $user->id,
-                'custom_id' => $user->custom_id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'phone' => $user->client->mobile?? 'N/A',
-                'approved_by' => $user->client && $user->client->approved_by ?User::find($user->client->approved_by)->name: 'N/A',
-                'gender' => $user->client->gender ?? 'N/A',
-                'status' => $user->client->status ?? 'N/A',
-                'country' => $user->client->country ?? 'N/A',
-            ];
-        });
+            ->with('client')
+            ->paginate(7)
+            ->through(function ($user) {
+                return [
+                    'id' => $user->id,
+                    'custom_id' => $user->custom_id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'phone' => $user->client->mobile ?? 'N/A',
+                    'approved_by' => $user->client && $user->client->approved_by ? User::find($user->client->approved_by)->name : 'N/A',
+                    'gender' => $user->client->gender ?? 'N/A',
+                    'status' => $user->client->status ?? 'N/A',
+                    'country' => $user->client->country ?? 'N/A',
+                ];
+            });
         return Inertia::render('Clients/Index', [
             'clients' => $clients,
-            'role'=>$role,
-            'loginUser'=>auth()->user()->id
+            'role' => $role,
+            'loginUser' => auth()->user()->id
         ]);
     }
+
+
     public function validateStep1(Request $request)
     {
         $request->validate([
@@ -52,98 +55,102 @@ class ClientController extends Controller
         return back();
     }
 
-        public function store(Request $request)
-        {
-            $validated = $request->validate([
-                'name' => 'required',
-                'email' => 'required',
-                'country' => 'required|string|max:100',
-                'phone' => 'required',
-                'approved_by' => 'string',
-                'avatar' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
-            ]);
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required',
+            'email' => 'required',
+            'country' => 'required|string|max:100',
+            'phone' => 'required',
+            'approved_by' => 'string',
+            'avatar' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
 
-            // Create user
-            $user = User::create([
-                'name' => $validated['name'],
-                'email' => $validated['email'],
-                'password' => Hash::make($request->password),
-                'role' => 'client',
-            ]);
+        // Create user
+        $user = User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($request->password),
+            'role' => 'client',
+        ]);
 
-            // Handle avatar upload
-            if ($request->hasFile('avatar')) {
-                $avatarPath = $request->file('avatar')->store('avatars', 'public');
-                $user['avatar_image'] = $avatarPath;
-            }
-            // Create client profile
-            Client::create([
-                'user_id' => $user->id,
-                'mobile' => $validated['phone'],
-                'gender' => $request->gender,
-                'status' => $request->status,
-                'country' => $validated['country'],
-                'approved_by' => $validated['approved_by'],
-            ]);
-            $this->reset_custom_id();
+        // Handle avatar upload
+        if ($request->hasFile('avatar')) {
+            $avatarPath = $request->file('avatar')->store('avatars', 'public');
+            $user['avatar_image'] = $avatarPath;
+        }
+        // Create client profile
+        Client::create([
+            'user_id' => $user->id,
+            'mobile' => $validated['phone'],
+            'gender' => $request->gender,
+            'status' => $request->status,
+            'country' => $validated['country'],
+            'approved_by' => $validated['approved_by'],
+        ]);
+        $this->reset_custom_id();
+        return redirect()->back();
+    }
+
+    public function destroy($id)
+    {
+        $user = User::find($id);
+        $client = Client::where('user_id', '=', $id)->first();
+        if (!$user) {
             return redirect()->back();
+        } else {
+            $user->delete();
         }
 
-        public function destroy($id)
-        {
-            $user = User::find($id);
-            $client = Client::where('user_id', '=', $id)->first();
-            if (!$user) {
-                return redirect()->back();
+        if ($client) {
+            if ($client->avatar_image) {
+                Storage::disk('public')->delete($client->avatar_image);
             }
-            else{
-                $user->delete();
-            }
-
-            if($client){
-                if ($client->avatar_image) {
-                    Storage::disk('public')->delete($client->avatar_image);
-                }
-                $client->delete();
-            }
-            $this->reset_custom_id();
-            return redirect()->back();
+            $client->delete();
         }
+        $this->reset_custom_id();
+        return redirect()->back();
+    }
 
-        public function reset_custom_id(){
+    public function reset_custom_id()
+    {
 
-            $users = User::where('role', 'client')->orderBy('created_at')->get();
-            $counter = 1;
-            foreach ($users as $user) {
-                $user->custom_id = $counter++;
-                $user->save();
-            }
+        $users = User::where('role', 'client')->orderBy('created_at')->get();
+        $counter = 1;
+        foreach ($users as $user) {
+            $user->custom_id = $counter++;
+            $user->save();
         }
+    }
     public function updateClient(Request $request, $id)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => 'required','email','unique:users,email', Rule::unique('users', 'email')->ignore($id),
+            'email' => 'required',
+            'email',
+            'unique:users,email',
+            Rule::unique('users', 'email')->ignore($id),
             'phone' => 'required|string|min:7|max:15',
             'country' => 'required|string|max:100',
         ]);
 
-    // Update user details
-    $user = User::findOrFail($id);
-    $user->update([
-        'name' => $validated['name'],
-        'email' => $validated['email'],
-    ]);
-    $client = Client::where('user_id', $id)->first();
-    if($client){
-        $client->update([
-            'mobile' => $validated['phone'],
-            'country' => $validated['country'] ,
-            'approved_by' => $request->approved_by,
-        ]);}
+        // Update user details
+        $user = User::findOrFail($id);
+        $user->update([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ]);
+        $client = Client::where('user_id', $id)->first();
+        if ($client) {
+            $client->update([
+                'mobile' => $validated['phone'],
+                'country' => $validated['country'],
+                'approved_by' => $request->approved_by,
+            ]);
+        }
         return redirect()->back();
-}
-        //=======================================================================================
+    }
+    //=======================================================================================
     /**
      * Display a list of pending clients.
      */
