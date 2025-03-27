@@ -64,15 +64,14 @@ const mainNavItems = computed(() => {
 
     }
 
-    if (can.value.manage_clients) {
-
-    }
-    if (can.value.approve_client || can.value.view_approved_clients || can.value.view_client_reservations) {
-        items.push({
+    if ((can.value.approve_client || can.value.view_approved_clients || can.value.view_client_reservations) || can.value.manage_clients) {
+        if(user.value.role === 'manager' || user.value.role === 'admin'){
+            items.push({
             title: 'Manage Clients',
             href: `${roleRoute}/clients`,
             icon: Users,
         });
+        }
         items.push({
             title: 'Manage Pending Clients',
             href: '/dashboard/receptionist/clients/pending',
@@ -106,7 +105,7 @@ const mainNavItems = computed(() => {
         });
     }
 
-    if (can.value.view_reservations || can.value.manage_reservations) {
+    if (can.value.manage_reservations) {
         items.push({
             title: 'Reservations',
             href: '/admin/clients/reservations',
