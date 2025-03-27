@@ -127,13 +127,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Show client's reservations
     Route::get('/client/my-reservations', [ReservationController::class, 'myReservations'])
-        ->name('client.reservations');
+        ->name('client.my-reservations');
 
     Route::get('/client/make-reservation/{roomId}/payment', [ReservationController::class, 'showPaymentForm'])
     ->name('client.payment');
 
     Route::post('/client/payment/{roomId}', [ReservationController::class, 'processPayment']);
 
+    Route::get('/client/payment-success/{roomId}', [ReservationController::class, 'paymentSuccess'])->name('client.payment.success');
 
         Route::prefix('client')->middleware('auth')->group(function() {
             //

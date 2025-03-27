@@ -294,7 +294,7 @@ const confirmDelete = () => {
 
     router.delete(`/admin/managers/${managerToDelete.value.id}`, {
         data: {
-            page: currentPage.value // Pass the current page
+            page: currentPage.value
         },
         preserveScroll: true,
         onSuccess: (page) => {

@@ -112,95 +112,151 @@ class ReservationController extends Controller
         ]);
 
         //add reservation message
-        Log::info('Reservation stored successfully:', $reservation);
+        Log::info('Reservation stored successfully:', ['reservation_id' => $reservation->id, 'client_id' => $reservation->client_id, 'room_id' => $reservation->room_id]);
 
         //create a payment intent
         $paymentIntent = $this->createPaymentIntent($room->price);
 
+        // Check if there was an error creating the payment intent
+        if (isset($paymentIntent['error'])) {
+            return back()->withErrors(['payment' => $paymentIntent['error']]);
+        }
+
         //
-        return Inertia::render('PaymentPage', [
+        return Inertia::render('HClient/PaymentForm', [
             'roomId' => $room->id,
             'clientSecret' => $paymentIntent['clientSecret'],
+            'amount' => $room->price
         ]);
+    }
+
+    // Process payment using Stripe
+    public function showPaymentForm($roomId)
+    {
+        $room = Room::findOrFail($roomId);
+
+        if (!$room) {
+            return redirect()->route('client.reservations')->with('error', 'Room not found');
+        }
+
+        // Create payment intent
+        $paymentIntent = $this->createPaymentIntent($room->price);
+
+        // Check if there was an error creating the payment intent
+        if (isset($paymentIntent['error'])) {
+            return back()->withErrors(['payment' => $paymentIntent['error']]);
+        }
+
+        return Inertia::render('HClient/PaymentForm', [
+            'roomId' => $room->id,
+            'clientSecret' => $paymentIntent['clientSecret'],
+            'amount' => $room->price
+        ]);
+    }
+
+    //
+    public function processPayment(Request $request, $roomId)
+    {
+        // Validate the request
+        $request->validate([
+            'payment_method_id' => 'required|string',
+        ]);
+
+        $room = Room::findOrFail($roomId);
+
+        //stripe to process payment
+        try {
+            Stripe::setApiKey(env('STRIPE_SECRET_KEY'));
+
+            $paymentIntent = PaymentIntent::create([
+                'amount' => $room->price * 100, //price in cents
+                'currency' => 'usd',
+                'payment_method' => $request->payment_method_id,
+                'confirm' => true,
+            ]);
+
+            // if payment is successful, update the reservation status to "paid"
+            $reservation = Reservation::where('room_id', $roomId)
+                ->where('client_id', Auth::id())
+                ->first();
+
+            if (!$reservation) {
+                return back()->withErrors(['reservation_error' => 'Reservation not found']);
             }
+            // update the reservation status to "paid"
+            $reservation->status = 'paid';
+            $reservation->save();
 
+            return redirect()->route('client.reservations')->with('success', 'Payment successful, reservation confirmed!');
+        } catch (\Exception $e) {
+            return back()->withErrors(['payment_error' => 'Payment failed: ' . $e->getMessage()]);
+        }
+    }
 
+    // to create a payment intent
+    public function createPaymentIntent($amount)
+    {
+        if (!env('STRIPE_SECRET_KEY')) {
+            Log::error('Stripe secret key is not configured');
+            return ['error' => 'Payment system is not properly configured'];
+        }
 
-
-
-
-
-
-      // Process payment using Stripe
-      public function showPaymentForm($roomId)
-      {
-          $room = Room::find($roomId);
-
-          if (!$room) {
-              return redirect()->route('client.reservations')->with('error', 'Room not found');
-          }
-
-          return inertia('HClient/PaymentForm', ['room' => $room]);
-      }
-
-
-      //
-public function processPayment(Request $request, $roomId)
-{
-    // Validate the request
-    $request->validate([
-        'payment_method_id' => 'required|string',
-    ]);
-
-    $room = Room::findOrFail($roomId);
-
-    //stripe to process payment
-    try {
         Stripe::setApiKey(env('STRIPE_SECRET_KEY'));
 
+        try {
+            $paymentIntent = PaymentIntent::create([
+                'amount' => (int)($amount * 100), // amount in cents, ensure it's an integer
+                'currency' => 'usd',
+            ]);
 
-        $paymentIntent = PaymentIntent::create([
-            'amount' => $room->price * 100, //price in cents
-            'currency' => 'usd',
-            'payment_method' => $request->payment_method_id,
-            'confirm' => true,
-        ]);
+            if (!$paymentIntent || !$paymentIntent->client_secret) {
+                Log::error('Failed to create payment intent: No client secret received');
+                return ['error' => 'Failed to initialize payment'];
+            }
 
-        // if payment is successful, update the reservation status to "paid"
-        $reservation = Reservation::where('room_id', $roomId)
-            ->where('client_id', Auth::id())
-            ->first();
-
-        if (!$reservation) {
-            return back()->withErrors(['reservation_error' => 'Reservation not found']);
+            return ['clientSecret' => $paymentIntent->client_secret];
+        } catch (\Exception $e) {
+            Log::error('Stripe payment intent creation failed: ' . $e->getMessage());
+            return ['error' => 'Payment initialization failed: ' . $e->getMessage()];
         }
-        // update the reservation status to "paid"
-        $reservation->status = 'paid';
-        $reservation->save();
-
-        return redirect()->route('client.myReservations')->with('success', 'Payment successful, reservation confirmed!');
-    } catch (\Exception $e) {
-        return back()->withErrors(['payment_error' => 'Payment failed: ' . $e->getMessage()]);
     }
-}
 
+    // Handle successful payment
+    public function paymentSuccess($roomId)
+    {
+        try {
+            $room = Room::findOrFail($roomId);
+            
+            // Find the reservation
+            $reservation = Reservation::where('room_id', $roomId)
+                ->where('client_id', Auth::user()->client->id)
+                ->latest()
+                ->firstOrFail();
 
-      // to create a payment intent
-      public function createPaymentIntent($amount)
-      {
-          Stripe::setApiKey(env('STRIPE_SECRET_KEY'));
+            // Update reservation status
+            $reservation->update([
+                'status' => 'paid',
+                'payment_confirmed_at' => now()
+            ]);
 
-          try {
-              $paymentIntent = PaymentIntent::create([
-                  'amount' => $amount * 100, // amount in cents
-                  'currency' => 'usd',
-              ]);
+            // Update room status
+            $room->update(['is_reserved' => true]);
 
-              return ['clientSecret' => $paymentIntent->client_secret];
-          } catch (\Exception $e) {
-              return ['error' => $e->getMessage()];
-          }
-      }
+            return Inertia::render('HClient/PaymentSuccess', [
+                'reservation' => [
+                    'id' => $reservation->id,
+                    'room_number' => $room->number,
+                    'paid_amount' => $reservation->paid_price,
+                    'booking_date' => $reservation->created_at->format('Y-m-d H:i:s')
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Payment success handling failed: ' . $e->getMessage());
+            return redirect()->route('client.myReservations')
+                ->with('error', 'There was an issue confirming your payment. Please contact support.');
+        }
+    }
 
     // Cancel a reservation
     public function cancelReservation(Request $request)
@@ -214,42 +270,5 @@ public function processPayment(Request $request, $roomId)
         $reservation->delete();
 
         return redirect()->route('client.reservations')->with('success', 'Reservation canceled successfully.');
-
-// use App\Models\Reservation;
-// use Inertia\Inertia;
-// use Illuminate\Support\Facades\Log;
-
-// class ReservationController extends Controller
-// {
-//     public function index(Request $request)
-//     {
-//         try {
-//             $validated = $request->validate([
-//                 'page' => 'sometimes|integer|min:1',
-//                 'pageSize' => 'sometimes|integer|min:1|max:100',
-//             ]);
-
-//             $page = $validated['page'] ?? 1;
-//             $pageSize = $validated['pageSize'] ?? 5;
-
-//             $reservations = Reservation::whereHas('client')
-//                 ->with(['client.user:id,name,email', 'room:id,number'])
-//                 ->orderBy('created_at', 'desc')
-//                 ->paginate($pageSize, ['*'], 'page', $page);
-
-//             return Inertia::render('Managers/clientReservations/index', [
-//                 'reservations' => $reservations->items(),
-//                 'pagination' => [ // Make sure this matches your frontend expectation
-//                     'page' => $reservations->currentPage(),
-//                     'pageSize' => $reservations->perPage(),
-//                     'total' => $reservations->total(),
-//                 ],
-//             ]);
-
-//         } catch (\Exception $e) {
-//             Log::error('ClientReservationController error: ' . $e->getMessage());
-//             return back()->with('error', 'Failed to load reservations');
-//         }
-
     }
 }

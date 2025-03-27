@@ -4,7 +4,7 @@ import { Head } from '@inertiajs/vue3';
 import TabsHeader from '@/components/TabsHeader.vue';
 import { computed, watch } from 'vue';
 import { route } from 'ziggy-js';
-import { usePage,router } from '@inertiajs/vue3'
+import { usePage, router } from '@inertiajs/vue3'
 
 const page = usePage()
 
@@ -16,7 +16,7 @@ const tabs = computed(() => {
     {
       label: 'Pending Clients',
       href: route('receptionist.pendingClients'),
-      active: currentUrl.includes('/pending') // Match your actual URL segment
+      active: currentUrl.includes('/pending')
     },
     {
       label: 'Approved Clients',
@@ -33,12 +33,12 @@ const tabs = computed(() => {
 </script>
 
 <template>
-    <AppLayout>
-        <Head title="Client Management" />
-        <div class="space-y-6 w-90 mx-5">
-            <TabsHeader title="Manage Clients" :tabs="tabs" />
-            <slot />
-        </div>
-    </AppLayout>
-</template>
+  <AppLayout>
 
+    <Head title="Client Management" />
+    <div class="space-y-6 w-90 mx-5">
+      <TabsHeader title="Manage Clients" :tabs="tabs" />
+      <slot />
+    </div>
+  </AppLayout>
+</template>

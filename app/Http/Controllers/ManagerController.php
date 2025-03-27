@@ -86,22 +86,6 @@ class ManagerController extends Controller
             ->with('managers', $managers);
     }
 
-    // public function edit(User $user)
-    // {
-    //     // Allow users to edit their own profile
-    //     if (auth()->id() !== $user->id) {
-    //         // The permission check for managing other managers is handled by middleware
-    //         // This just ensures a manager can edit their own profile
-    //         abort_if($user->role !== 'manager', 403, 'Unauthorized action.');
-    //     }
-
-    //     if ($user->avatar_image) {
-    //         $user->avatar = asset('storage/' . $user->avatar_image);
-    //     }
-        
-    //     return Inertia::render('Managers/Edit', ['user' => $user]);
-    // }
-
     public function update(StoreUserRequest $request, User $user)
     {
         if (auth()->id() !== $user->id) {

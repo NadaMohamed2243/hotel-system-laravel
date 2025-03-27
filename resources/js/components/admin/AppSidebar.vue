@@ -13,17 +13,14 @@ import AppLogo from '../AppLogo.vue';
 const page = usePage();
 const user = computed(() => page.props.auth.user);
 const can = computed(() => page.props.auth.can || {});
-let roleRoute='';
-// console.log(user.value.role);
-if(user.value.role==='manager'){
-    roleRoute="/manager";
+let roleRoute = '';
+if (user.value.role === 'manager') {
+    roleRoute = "/manager";
 }
-else if(user.value.role==='admin'){
-    roleRoute="/admin";
+else if (user.value.role === 'admin') {
+    roleRoute = "/admin";
 }
-// console.log(`${role}/floors`);
 const role = computed(() => user.value?.role); // Get user role
-console.log(role.value);
 
 // Core navigation items everyone can see
 
@@ -70,30 +67,6 @@ const mainNavItems = computed(() => {
     if (can.value.manage_clients) {
 
     }
-
-
-    // if (can.value.approve_client) {
-    //     items.push({
-    //         title: 'Manage Pending Clients',
-    //         href: '/dashboard/receptionist/clients/pending',
-    //         icon: Users,
-    //     });
-    // }
-    // if (can.value.view_approved_clients) {
-    //     items.push({
-    //         title: 'My Approved Clients',
-    //         href: '/dashboard/receptionist/clients/approved',
-    //         icon: Users,
-    //     });
-    // }
-    // if (can.value.view_client_reservations) {
-    //     items.push({
-    //         title: 'My Clients Reservations',
-    //         href: '/dashboard/receptionist/clients/reservations',
-    //         icon: Hotel,
-    //     });
-    // }
-
     if (can.value.approve_client || can.value.view_approved_clients || can.value.view_client_reservations) {
         items.push({
             title: 'Manage Clients',
@@ -145,16 +118,6 @@ const mainNavItems = computed(() => {
 });
 
 const footerNavItems: NavItem[] = [
-    // {
-    //     title: 'Github Repo',
-    //     href: 'https://github.com/laravel/vue-starter-kit',
-    //     icon: Folder,
-    // },
-    // {
-    //     title: 'Documentation',
-    //     href: 'https://laravel.com/docs/starter-kits',
-    //     icon: BookOpen,
-    // },
 ];
 </script>
 
