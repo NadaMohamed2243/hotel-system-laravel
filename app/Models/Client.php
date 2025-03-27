@@ -15,6 +15,7 @@ class Client extends Model
         'mobile',
         'country',
         'gender',
+        'mobile', 
         'last_login_at'
     ];
 

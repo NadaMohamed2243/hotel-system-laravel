@@ -23,7 +23,7 @@
                     </div>
                     <div class="py-4 flex justify-between">
                         <dt class="text-gray-600">Amount Paid</dt>
-                        <dd class="text-gray-900 font-medium">{{ formatPrice(reservation.paid_amount) }}</dd>
+                        <dd class="text-gray-900 font-medium">{{ formatPrice(reservation.paid_amount/100) }}</dd>
                     </div>
                     <div class="py-4 flex justify-between">
                         <dt class="text-gray-600">Booking Date</dt>

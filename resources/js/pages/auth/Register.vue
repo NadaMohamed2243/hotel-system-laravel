@@ -21,6 +21,7 @@ const form = useForm({
     password_confirmation: '',
     country: '',
     gender: '',
+    mobile: '',
 });
 
 const submit = () => {
@@ -99,6 +100,21 @@ const submit = () => {
                         <option value="Female">Female</option>
                     </select>
                     <InputError :message="form.errors.gender" />
+                </div>
+
+                <!-- Mobile Number Field -->
+                <div class="grid gap-2">
+                    <Label for="mobile">Mobile Number</Label>
+                    <Input
+                        id="mobile"
+                        type="tel"
+                        required
+                        :tabindex="3"
+                        autocomplete="tel"
+                        v-model="form.mobile"
+                        placeholder="Enter your mobile number"
+                    />
+                    <InputError :message="form.errors.mobile" />
                 </div>
 
                 <!-- Submit Button -->
