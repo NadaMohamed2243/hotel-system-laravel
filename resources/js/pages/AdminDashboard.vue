@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import AdminAppLayout from '@/layouts/AdminAppLayout.vue';
-import { Head, usePage } from '@inertiajs/vue3';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { computed } from 'vue';
+import { Head, usePage, Link } from '@inertiajs/vue3'; // Add Link to imports
 
 // Get the user permissions from the usePage hook
 const page = usePage();
@@ -72,6 +72,11 @@ const roleTitle = computed(() => {
                                 <div class="text-2xl font-bold">15 Rooms</div>
                                 <p class="text-muted-foreground">Available for booking</p>
                             </CardContent>
+                            <CardFooter>
+                                <Button as-child>
+                                    <Link :href="route('admin.rooms.index')">Manage Rooms</Link>
+                                </Button>
+                            </CardFooter>
                         </Card>
                     </div>
                 </TabsContent>
@@ -88,7 +93,9 @@ const roleTitle = computed(() => {
                                 <p>Currently 3 active managers</p>
                             </CardContent>
                             <CardFooter>
-                                <Button>Manage Managers</Button>
+                                <Button as-child>
+                                    <Link :href="route('managers.index')">Manage Managers</Link>
+                                </Button>
                             </CardFooter>
                         </Card>
 
@@ -102,7 +109,11 @@ const roleTitle = computed(() => {
                                 <p>Currently 5 active receptionists</p>
                             </CardContent>
                             <CardFooter>
-                                <Button>Manage Receptionists</Button>
+                                <Button as-child>
+                                    <Link :href="user.role === 'manager' ? route('manager.receptionists.index') : route('admin.receptionists.index')">
+                                        Manage Receptionists
+                                    </Link>
+                                </Button>
                             </CardFooter>
                         </Card>
 
@@ -119,7 +130,11 @@ const roleTitle = computed(() => {
                                 <p>Currently 25 active clients</p>
                             </CardContent>
                             <CardFooter>
-                                <Button>View Clients</Button>
+                                <Button as-child>
+                                    <Link :href="route('admin.clients.index')">
+                                        View Clients
+                                    </Link>
+                                </Button>
                             </CardFooter>
                         </Card>
 
@@ -151,7 +166,9 @@ const roleTitle = computed(() => {
                             <p>Recent bookings will be displayed here</p>
                         </CardContent>
                         <CardFooter>
-                            <Button>View All Bookings</Button>
+                            <Button as-child>
+                                <Link :href="route('admin.clientReservations')">View Bookings</Link>
+                            </Button>
                         </CardFooter>
                     </Card>
                 </TabsContent>
