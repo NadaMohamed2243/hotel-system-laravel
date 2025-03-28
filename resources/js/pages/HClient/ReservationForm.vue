@@ -29,7 +29,7 @@ const submitReservation = () => {
     })
         .then((response) => {
             console.log('Reservation successful');
-            // Let the backend handle the redirect
+            console.log('API Response:', response);
             window.location.href = response.data.redirect;
         })
         .catch((error) => {
@@ -47,7 +47,7 @@ const submitReservation = () => {
             <h1 class="text-2xl font-bold text-gray-800 mb-4">Reserve Room #{{ room.number }}</h1>
 
             <p class="text-gray-600">Capacity: <span class="font-medium">{{ room.capacity }} persons</span></p>
-            <p class="text-gray-600">Price: <span class="font-medium text-green-600">${{ room.price }}</span></p>
+            <p class="text-gray-600">Price: <span class="font-medium text-green-600">${{ (room.price / 100) }}</span></p>
 
             <div class="mt-4">
                 <label class="block text-gray-700 font-semibold">Number of Accompany</label>

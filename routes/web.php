@@ -119,25 +119,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Store reservation
     Route::post('/client/reserve', [ReservationController::class, 'storeReservation'])
-        ->name('client.reserve');
+    ->name('client.reserve');
 
-    // Cancel reservation
-    Route::post('/client/cancel-reservation', [ReservationController::class, 'cancelReservation'])
-        ->name('client.cancelReservation');
-
-    // Show client's reservations
-    Route::get('/client/my-reservations', [ReservationController::class, 'myReservations'])
-        ->name('client.my-reservations');
-
+    //go to payment page
     Route::get('/client/make-reservation/{roomId}/payment', [ReservationController::class, 'showPaymentForm'])
     ->name('client.payment');
-
+    
+    //go to payment success page
     Route::get('/client/payment-success/{roomId}', [ReservationController::class, 'paymentSuccess'])->name('client.payment.success');
 
     Route::prefix('client')->middleware('auth')->group(function() {
         Route::post('/create-payment-intent', [ReservationController::class, 'createPaymentIntent'])->name('client.createPaymentIntent');
     });
 
+    // Show client's reservations
+    Route::get('/client/my-reservations', [ReservationController::class, 'myReservations'])
+        ->name('client.my-reservations');
+
+    // Cancel reservation
+    Route::delete('/client/cancel-reservation', [ReservationController::class, 'cancelReservation'])->name('client.cancelReservation');
+
+
+   
 });
 
 
