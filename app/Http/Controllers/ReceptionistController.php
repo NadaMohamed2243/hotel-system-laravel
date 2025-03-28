@@ -39,7 +39,7 @@ class ReceptionistController extends Controller
 
         $query = Receptionist::with(['user', 'manager']);
 
-        
+
 
         $totalCount = $query->count();
 
@@ -224,28 +224,32 @@ class ReceptionistController extends Controller
     public function ban(Receptionist $receptionist)
     {
         if (Auth::user()->role === 'manager' && $receptionist->manager_id !== Auth::id()) {
-            return redirect()->back()->with('error', 'You are not authorized to ban this receptionist.');
+            return back()->with('error', 'You are not authorized to ban this receptionist.');
         }
 
         $receptionist->update([
             'is_banned' => true,
             'banned_at' => now(),
         ]);
-            return redirect()->back()->with('success', 'Receptionist banned successfully.');
+
+        return back()->with('success', 'Receptionist banned successfully');
     }
 
     public function unban(Receptionist $receptionist)
     {
         if (Auth::user()->role === 'manager' && $receptionist->manager_id !== Auth::id()) {
-            return redirect()->back()->with('error', 'You are not authorized to unban this receptionist.');
+            return back()->with('error', 'You are not authorized to unban this receptionist.');
         }
 
         $receptionist->update([
             'is_banned' => false,
             'banned_at' => null,
         ]);
-            return redirect()->back()->with('success', 'Receptionist unbanned successfully.');
+
+        return back()->with('success', 'Receptionist unbanned successfully');
     }
+
+
 
 
     function isManagerRoute()

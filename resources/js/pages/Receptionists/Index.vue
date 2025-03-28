@@ -130,16 +130,16 @@
                      <div class="flex items-center justify-between px-4 py-3 border-t">
                         <!-- Mobile Pagination -->
                         <div class="flex-1 flex justify-between sm:hidden">
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 size="sm"
                                 :disabled="pagination.pageIndex === 0"
                                 @click="goToPage(pagination.pageIndex)"
                             >
                                 Previous
                             </Button>
-                            <Button 
-                                variant="outline" 
+                            <Button
+                                variant="outline"
                                 size="sm"
                                 :disabled="pagination.pageIndex >= receptionists.meta.pageCount - 1"
                                 @click="goToPage(pagination.pageIndex + 2)"
@@ -168,7 +168,7 @@
                                 <!-- Page Size Selector -->
                                 <div class="flex items-center space-x-2">
                                     <span class="text-sm text-gray-700">Rows per page:</span>
-                                    <Select 
+                                    <Select
                                         v-model="pagination.pageSize"
                                         @update:modelValue="handlePaginationChange"
                                     >
@@ -186,8 +186,8 @@
                                 <!-- Page Navigation -->
                                 <div class="flex space-x-1">
                                     <!-- First Page -->
-                                    <Button 
-                                        variant="outline" 
+                                    <Button
+                                        variant="outline"
                                         size="icon"
                                         :disabled="pagination.pageIndex === 0"
                                         @click="goToPage(1)"
@@ -196,8 +196,8 @@
                                     </Button>
 
                                     <!-- Previous Page -->
-                                    <Button 
-                                        variant="outline" 
+                                    <Button
+                                        variant="outline"
                                         size="icon"
                                         :disabled="pagination.pageIndex === 0"
                                         @click="goToPage(pagination.pageIndex)"
@@ -207,7 +207,7 @@
 
                                     <!-- Page Numbers -->
                                     <div v-for="pageNumber in getPageNumbers()" :key="pageNumber" class="hidden md:block">
-                                        <Button 
+                                        <Button
                                             v-if="pageNumber !== '...'"
                                             :variant="pageNumber === pagination.pageIndex + 1 ? 'default' : 'outline'"
                                             size="sm"
@@ -219,8 +219,8 @@
                                     </div>
 
                                     <!-- Next Page -->
-                                    <Button 
-                                        variant="outline" 
+                                    <Button
+                                        variant="outline"
                                         size="icon"
                                         :disabled="pagination.pageIndex >= receptionists.meta.pageCount - 1"
                                         @click="goToPage(pagination.pageIndex + 2)"
@@ -229,8 +229,8 @@
                                     </Button>
 
                                     <!-- Last Page -->
-                                    <Button 
-                                        variant="outline" 
+                                    <Button
+                                        variant="outline"
                                         size="icon"
                                         :disabled="pagination.pageIndex >= receptionists.meta.pageCount - 1"
                                         @click="goToPage(receptionists.meta.pageCount)"
@@ -254,7 +254,7 @@ import { ref, reactive, computed, watch } from 'vue';
 import { router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AdminAppLayout.vue';
 import { Button } from '@/components/ui/button';
-import { 
+import {
     Select,
     SelectContent,
     SelectItem,
@@ -360,9 +360,9 @@ const openDeleteDialog = (receptionist) => {
 // CRUD operations
 const handleReceptionistAdded = (receptionist) => {
     if (receptionist.is_temp) {
-        const manager = props.managers.find(m => m.id === receptionist.manager_id) || 
+        const manager = props.managers.find(m => m.id === receptionist.manager_id) ||
                        { name: 'You', email: page.props.auth.user.email };
-        
+
         receptionists.value.data.unshift({
             ...receptionist,
             manager_name: manager.name,
@@ -401,22 +401,24 @@ const cancelDelete = () => {
     receptionistToDelete.value = null;
 };
 
+// Replace the toggleBanStatus function with this:
 const toggleBanStatus = (receptionist) => {
-    const action = receptionist.is_banned ? 'unban' : 'ban';
-    const path = props.isManagerView ? `manager.receptionists.${action}` : `admin.receptionists.${action}`;
+    const path = props.isManagerView ? 'manager.receptionists' : 'admin.receptionists';
+    const endpoint = receptionist.is_banned ? 'unban' : 'ban';
 
-    router.post(route(path, receptionist.id), {}, {
+    router.post(route(`${path}.${endpoint}`, receptionist.id), null, {
+        preserveState: true,
         preserveScroll: true,
         onSuccess: () => {
-            receptionists.value.data = receptionists.value.data.map(r => {
-                if (r.id === receptionist.id) {
-                    return { ...r, is_banned: !r.is_banned };
-                }
-                return r;
-            });
+            receptionist.is_banned = !receptionist.is_banned;
+        },
+        onError: (errors) => {
+            console.error('Error toggling ban status:', errors);
         }
     });
 };
+
+
 
 // Pagination handlers
 const handlePaginationChange = () => {
@@ -425,7 +427,7 @@ const handlePaginationChange = () => {
 
 const goToPage = (page) => {
     if (page === '...') return;
-    
+
     const path = props.isManagerView ? 'manager.receptionists.index' : 'admin.receptionists.index';
     router.get(route(path), {
         page: page,
@@ -442,21 +444,21 @@ const getPageNumbers = () => {
     const total = receptionists.value.meta.pageCount;
     const delta = 1;
     const pages = [];
-    
+
     if (current > 1 + delta) {
         pages.push(1);
         if (current > 2 + delta) pages.push('...');
     }
-    
+
     for (let i = Math.max(1, current - delta); i <= Math.min(total, current + delta); i++) {
         pages.push(i);
     }
-    
+
     if (current < total - delta) {
         if (current < total - 1 - delta) pages.push('...');
         pages.push(total);
     }
-    
+
     return pages;
 };
 
