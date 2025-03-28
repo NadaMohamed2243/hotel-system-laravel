@@ -124,7 +124,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //go to payment page
     Route::get('/client/make-reservation/{roomId}/payment', [ReservationController::class, 'showPaymentForm'])
     ->name('client.payment');
-    
+
     //go to payment success page
     Route::get('/client/payment-success/{roomId}', [ReservationController::class, 'paymentSuccess'])->name('client.payment.success');
 
@@ -140,7 +140,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/client/cancel-reservation', [ReservationController::class, 'cancelReservation'])->name('client.cancelReservation');
 
 
-   
+
 });
 
 
@@ -203,6 +203,8 @@ Route::prefix('manager')->middleware(['auth'])->group(function () {
         Route::get('/{receptionist}/edit', [ReceptionistController::class, 'edit'])->name('manager.receptionists.edit');
         Route::put('/{receptionist}', [ReceptionistController::class, 'update'])->name('manager.receptionists.update');
         Route::delete('/{receptionist}', [ReceptionistController::class, 'destroy'])->name('manager.receptionists.destroy');
+        Route::post('/{receptionist}/ban', [ReceptionistController::class, 'ban'])->name('manager.receptionists.ban');
+        Route::post('/{receptionist}/unban', [ReceptionistController::class, 'unban'])->name('manager.receptionists.unban');
     });
 
 
