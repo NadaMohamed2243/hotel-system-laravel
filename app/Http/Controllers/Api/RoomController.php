@@ -24,13 +24,18 @@ class RoomController extends Controller
     }
     public function store(Request $request)
     {
-        $room = Room::create([
-            'number' => $request->number,
-            'capacity' => $request->capacity,
-            'price'=>(int) (($request->price)*100),
-            'is_reserved'=>$request->is_reserved,
-            'floor_id' => $request->floor_id,
+        $validatedData = $request->validate([
+            'capacity' => ['required', 'integer','min:1'],
+            'price' => ['required', 'numeric'],
+            'floor_id'=>['required','exists:floors,id']
         ]);
+        $lastRoom = Room::where('floor_id', $request->floor_id)->latest('number')->first();
+        $newRoomNumber = $lastRoom ? $lastRoom->number + 1 : ($request->floor_id * 1000 + 1);
+        //Convert price to cent
+        $validatedData['price'] = (int) ($validatedData['price'] * 100);
+        $validatedData['number']=$newRoomNumber;
+
+        $room=Room::create($validatedData);
 
         return new RoomResource($room);
     }

@@ -194,8 +194,8 @@ const goToPage = (url) => {
                         <div class="grid gap-2">
                             <Label for="floor" class="text-white">Select Floor</Label>
                             <select id="floor" v-model="form.floor_id"
-                                class="w-full bg-black text-white border border-gray-600 rounded-lg p-2 focus:ring-2 focus:ring-gray-400 focus:outline-none">
-                                <option v-for="floor in props.floors" :key="floor.id" :value="floor.id" :selected="form.floor_id">
+                                class="w-full bg-white text-gray-900 border border-gray-600 rounded-lg p-2 focus:ring-2 focus:ring-gray-400 focus:outline-none">
+                                <option v-for="floor in props.floors" :key="floor.id" :value="floor.id" :selected="form.floor_id" >
                                     {{ floor.name }}
                                 </option>
                             </select>

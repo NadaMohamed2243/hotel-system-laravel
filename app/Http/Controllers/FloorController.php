@@ -18,10 +18,10 @@ class FloorController extends Controller
         $pageSize = $request->input('pageSize', 10);
 
         $floorsQuery = Floor::with('manager');
-            
-        
+
+
         $paginatedFloors = $floorsQuery->paginate($pageSize);
-        
+
         $floors = $paginatedFloors->map(function ($floor) {
             $isOwnFloor = $floor->manager_id === Auth::id();
 
@@ -33,8 +33,9 @@ class FloorController extends Controller
                 'manager_name' => $floor->manager->name,
                 'manager_email' => $floor->manager->email,
                 'manager_id' => $floor->manager_id,
+                'room_count' => $floor->rooms()->count(), // Add room count
                 'can_edit' => Auth::user()->role === 'admin' || $isOwnFloor,
-                'can_delete' => Auth::user()->role === 'admin' || $isOwnFloor,
+                'can_delete' => (Auth::user()->role === 'admin' || $isOwnFloor) && $floor->rooms()->count() === 0,
                 'is_own_floor' => $isOwnFloor,
             ];
         });
@@ -76,9 +77,6 @@ class FloorController extends Controller
             'manager_id' => 'sometimes|exists:users,id'
         ]);
 
-        if (Auth::user()->role !== 'admin') {
-            $validated['manager_id'] = Auth::id();
-        }
 
         $floor = Floor::create($validated);
         $floor->load('manager');
@@ -101,7 +99,7 @@ class FloorController extends Controller
 
     public function show(Floor $floor)
     {
-        
+
         return Inertia::render('Floors/Show', [
             'floor' => $floor->load('manager'),
         ]);
@@ -109,9 +107,6 @@ class FloorController extends Controller
 
     public function edit(Floor $floor)
     {
-        if (Auth::user()->role === 'manager' && $floor->manager_id !== Auth::id()) {
-            return redirect()->back()->with('error', 'You are not authorized to edit this floor.');
-        }
 
         return Inertia::render('Floors/Edit', [
             'floor' => $floor->load('manager'),
@@ -122,19 +117,11 @@ class FloorController extends Controller
 
     public function update(Request $request, Floor $floor)
     {
-        if (Auth::user()->role === 'manager' && $floor->manager_id !== Auth::id()) {
-            return redirect()->back()->with('error', 'You are not authorized to update this floor.');
-        }
-
         $validated = $request->validate([
             'name' => 'required|string|min:3|max:255',
             'manager_id' => 'sometimes|exists:users,id'
         ]);
 
-        // Managers cannot change the floor manager
-        if (Auth::user()->role !== 'admin') {
-            unset($validated['manager_id']);
-        }
 
         $floor->update($validated);
         $floor->refresh();
@@ -157,16 +144,20 @@ class FloorController extends Controller
 
     public function destroy(Floor $floor)
     {
-       
-        if ($floor->rooms()->exists()) {
-            return redirect()->back()->with('error', 'Cannot delete floor with existing rooms.');
+        try {
+            if ($floor->rooms()->exists()) {
+                return redirect()->back()->with('error', 'Cannot delete floor because it contains rooms. Please remove all rooms first.');
+            }
+
+            $floor->delete();
+
+            return redirect()->back()->with('success', 'Floor deleted successfully');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Failed to delete floor. Please try again.');
         }
-
-        $floor->delete();
-
-        $routeName = Auth::user()->role === 'admin' ? 'admin.floors.index' : 'manager.floors.index';
-
-        return redirect()->route($routeName)
-            ->with('success', 'Floor deleted successfully');
     }
+
+
+
 }
+

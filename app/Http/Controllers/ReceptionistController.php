@@ -198,9 +198,6 @@ class ReceptionistController extends Controller
     public function destroy(Receptionist $receptionist)
     {
         try {
-            if (Auth::user()->role === 'manager' && $receptionist->manager_id !== Auth::id()) {
-                return redirect()->back()->with('error', 'You are not authorized to delete this receptionist.');
-            }
 
             $user = $receptionist->user;
 
@@ -223,9 +220,7 @@ class ReceptionistController extends Controller
 
     public function ban(Receptionist $receptionist)
     {
-        if (Auth::user()->role === 'manager' && $receptionist->manager_id !== Auth::id()) {
-            return back()->with('error', 'You are not authorized to ban this receptionist.');
-        }
+
 
         $receptionist->update([
             'is_banned' => true,
@@ -237,9 +232,7 @@ class ReceptionistController extends Controller
 
     public function unban(Receptionist $receptionist)
     {
-        if (Auth::user()->role === 'manager' && $receptionist->manager_id !== Auth::id()) {
-            return back()->with('error', 'You are not authorized to unban this receptionist.');
-        }
+
 
         $receptionist->update([
             'is_banned' => false,
@@ -257,5 +250,4 @@ class ReceptionistController extends Controller
         return request()->is('manager/*');
     }
 }
-
 
